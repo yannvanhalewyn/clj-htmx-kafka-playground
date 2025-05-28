@@ -18,3 +18,5 @@ modules/
 .clj-kondo/.cache/
 .calva/output-window/
 .lsp/.cache/
+.clj-kondo/*
+!.clj-kondo/config.edn
