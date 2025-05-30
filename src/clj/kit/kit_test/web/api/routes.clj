@@ -1,4 +1,4 @@
-(ns kit.kit-test.web.routes.api
+(ns kit.kit-test.web.api.routes
   (:require
     [kit.kit-test.web.controllers.health :as health]
     [kit.kit-test.web.middleware.exception :as exception]
@@ -43,9 +43,7 @@
     ;; restarting the system
     {:get #'health/healthcheck!}]])
 
-(derive :reitit.routes/api :reitit/routes)
-
-(defmethod ig/init-key :reitit.routes/api
+(defmethod ig/init-key ::routes
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]

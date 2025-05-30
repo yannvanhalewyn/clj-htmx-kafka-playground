@@ -39,7 +39,10 @@
   :env #ig/ref :system/env}
 
  :router/routes
- {:routes #ig/refset :reitit/routes}
+ {:routes [#ig/ref :kit.kit-test.web.api.routes/routes]}
+
+ ;; Route handlers
+ :kit.kit-test.web.api.routes/routes {}
 
  :router/core
  {:routes #ig/ref :router/routes
