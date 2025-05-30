@@ -44,6 +44,7 @@
 
  ;; Route handlers
  :kit.kit-test.web.api.routes/routes {}
+ :kit.kit-test.web.routes/routes {}
 
  :router/core
  {:routes #ig/ref :router/routes
