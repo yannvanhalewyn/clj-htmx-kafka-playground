@@ -2,13 +2,13 @@
   (:require
     [kit.kit-test.web.middleware.exception :as exception]
     [kit.kit-test.web.middleware.formats :as formats]
-    [kit.kit-test.web.routes.utils :as utils]
+    [kit.kit-test.web.views.hello :as views.hello]
     [kit.kit-test.web.htmx :refer [page pagelet] :as htmx]
     [integrant.core :as ig]
     [reitit.ring.middleware.muuntaja :as muuntaja]
     [reitit.ring.middleware.parameters :as parameters]))
 
-(defn home [request]
+(defn home [_req]
   (page {:lang "en"}
     [:head
      [:meta {:charset "UTF-8"}]
@@ -18,7 +18,7 @@
      [:h1 "Welcome to Htmx + Kit module"]
      [:button {:hx-post "/clicked" :hx-swap "outerHTML"} "Click me!"]]))
 
-(defn clicked [request]
+(defn clicked [_req]
   (pagelet
     [:div "Congratulations! You just clicked the button!"]))
 
@@ -42,4 +42,4 @@
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]
-  (fn [] [base-path route-data (ui-routes opts)]))
+  (fn [] [base-path route-data (views.hello/ui-routes opts)]))

@@ -1,1 +1,16 @@
-{}
+{:source-aliases #{:dev :test}
+
+ :lint-as
+ {simpleui.core/defcomponent clojure.core/defn}
+
+ :linters
+ {:clojure-lsp/unused-public-var {:exclude-when-contains-meta #{:lsp/allow-unused}}
+  :consistent-alias {:aliases {clojure.string str}}
+  :redundant-fn-wrapper {:level :warning}
+  :unsorted-required-namespaces {:level :warning}}
+
+ :config-in-comment
+ {:linters {:duplicate-require {:level :off}
+            :redundant-expression {:level :off}
+            :unresolved-namespace {:level :off}
+            :unsorted-required-namespaces {:level :off}}}}

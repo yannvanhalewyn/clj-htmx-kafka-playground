@@ -19,7 +19,9 @@
 
            ;; kit Libs
            io.github.kit-clj/kit-core {:mvn/version "1.0.9"}
-           io.github.kit-clj/kit-undertow {:mvn/version "1.0.8"}}
+           io.github.kit-clj/kit-undertow {:mvn/version "1.0.8"}
+           simpleui/simpleui {:git/url "https://github.com/whamtet/simpleui",
+                              :git/sha "a107d7a8a69755dae6cd9954992614a86504c257"}}
 
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.6"}}

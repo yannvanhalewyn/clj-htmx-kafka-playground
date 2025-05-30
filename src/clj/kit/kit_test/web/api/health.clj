@@ -1,4 +1,4 @@
-(ns kit.kit-test.web.controllers.health
+(ns kit.kit-test.web.api.health
   (:require
     [ring.util.http-response :as http-response])
   (:import

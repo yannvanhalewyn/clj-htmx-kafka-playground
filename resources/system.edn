@@ -34,7 +34,7 @@
                                      :content-types true
                                      :default-charset "utf-8"}}}
 
- :kit.kit-test.web.handler/routes
+ :router/routes
  {:routes [#ig/ref :kit.kit-test.web.api.routes/routes
            #ig/ref :kit.kit-test.web.routes/routes]}
 
@@ -45,6 +45,6 @@
  :kit.kit-test.web.routes/routes
  {}
 
- :kit.kit-test.web.handler/ring-router
- {:routes #ig/ref :kit.kit-test.web.handler/routes
+ :router/core
+ {:routes #ig/ref :router/routes
   :env #ig/ref :system/env}}

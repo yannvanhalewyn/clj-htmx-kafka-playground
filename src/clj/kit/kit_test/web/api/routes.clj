@@ -1,6 +1,6 @@
 (ns kit.kit-test.web.api.routes
   (:require
-    [kit.kit-test.web.controllers.health :as health]
+    [kit.kit-test.web.api.health :as health]
     [kit.kit-test.web.middleware.exception :as exception]
     [kit.kit-test.web.middleware.formats :as formats]
     [integrant.core :as ig]
@@ -41,7 +41,7 @@
     ;; note that use of the var is necessary
     ;; for reitit to reload routes without
     ;; restarting the system
-    {:get #'health/healthcheck!}]])
+    {:get health/healthcheck!}]])
 
 (defmethod ig/init-key ::routes
   [_ {:keys [base-path]

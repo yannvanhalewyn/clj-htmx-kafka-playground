@@ -9,6 +9,9 @@
     [integrant.repl :as ir]
     [kit.api :as kit]
     [kit.kit-test.config :as config]
+    [kit.kit-test.web.api.routes]
+    [kit.kit-test.web.handler]
+    [kit.kit-test.web.routes]
     [lambdaisland.classpath.watch-deps :as watch-deps])) ;; hot loading for deps
 
 (defn dev-prep!
@@ -26,7 +29,6 @@
         (config/system-config {:profile :test})))))
 
 ;; uncomment to enable hot loading for deps
-(watch-deps/start! {:aliases [:dev :test]})
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 (add-tap (bound-fn* clojure.pprint/pprint))
 
@@ -34,6 +36,7 @@
 (repl/set-refresh-dirs "src/clj" "env/dev/")
 
 (comment
+  (watch-deps/start! {:aliases [:dev :test]})
   (ir/go)
   (ir/reset)
   (repl/refresh)
