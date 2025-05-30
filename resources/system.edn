@@ -39,7 +39,8 @@
   :env #ig/ref :system/env}
 
  :router/routes
- {:routes [#ig/ref :kit.kit-test.web.api.routes/routes]}
+ {:routes [#ig/ref :kit.kit-test.web.api.routes/routes
+           #ig/ref :kit.kit-test.web.routes/routes]}
 
  ;; Route handlers
  :kit.kit-test.web.api.routes/routes {}

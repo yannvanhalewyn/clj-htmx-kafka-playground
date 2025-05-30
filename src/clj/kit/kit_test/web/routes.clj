@@ -1,4 +1,4 @@
-(ns kit.kit-test.web.routes.ui
+(ns kit.kit-test.web.routes
   (:require
    [kit.kit-test.web.middleware.exception :as exception]
    [kit.kit-test.web.middleware.formats :as formats]
@@ -38,9 +38,7 @@
     ;; exception handling
     exception/wrap-exception]})
 
-(derive :reitit.routes/ui :reitit/routes)
-
-(defmethod ig/init-key :reitit.routes/ui
+(defmethod ig/init-key ::routes
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]
