@@ -45,4 +45,5 @@
 
 (comment
   (go)
-  (reset))
+  (reset)
+  (kit/install-module :kit/htmx))

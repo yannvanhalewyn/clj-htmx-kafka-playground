@@ -10,7 +10,8 @@
    [kit.kit-test.web.handler]
 
     ;; Routes
-   [kit.kit-test.web.routes.api])
+   [kit.kit-test.web.routes.api]
+   [kit.kit-test.web.routes.ui])
   (:gen-class))
 
 ;; log uncaught exceptions in threads
