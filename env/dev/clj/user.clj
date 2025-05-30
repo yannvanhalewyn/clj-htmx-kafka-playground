@@ -11,7 +11,7 @@
     [kit.kit-test.config :as config]
     [kit.kit-test.web.api.routes]
     [kit.kit-test.web.handler]
-    [kit.kit-test.web.routes]
+    [kit.kit-test.web.ui.routes]
     [lambdaisland.classpath.watch-deps :as watch-deps])) ;; hot loading for deps
 
 (defn dev-prep!

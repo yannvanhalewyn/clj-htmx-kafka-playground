@@ -35,7 +35,8 @@
                        ring/ring-devel                 {:mvn/version "1.14.0"}
                        ring/ring-mock                  {:mvn/version "0.4.0"}
                        io.github.kit-clj/kit-generator {:mvn/version "0.2.5"}
-                       org.clojure/tools.namespace     {:mvn/version "1.4.4"}}
+                       org.clojure/tools.namespace     {:mvn/version "1.4.4"}
+                       vvvvalvalval/scope-capture      {:mvn/version "0.3.3"}}
 
          :extra-paths ["env/dev/clj" "env/dev/resources" "test/clj"]}
   :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.1.0"}}

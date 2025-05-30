@@ -1,10 +1,10 @@
-(ns kit.kit-test.web.routes
+(ns kit.kit-test.web.ui.routes
   (:require
+    [integrant.core :as ig]
+    [kit.kit-test.web.htmx :refer [page pagelet] :as htmx]
     [kit.kit-test.web.middleware.exception :as exception]
     [kit.kit-test.web.middleware.formats :as formats]
-    [kit.kit-test.web.views.hello :as views.hello]
-    [kit.kit-test.web.htmx :refer [page pagelet] :as htmx]
-    [integrant.core :as ig]
+    [kit.kit-test.web.ui.hello :as ui.hello]
     [reitit.ring.middleware.muuntaja :as muuntaja]
     [reitit.ring.middleware.parameters :as parameters]))
 
@@ -42,4 +42,4 @@
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]
-  (fn [] [base-path route-data (views.hello/ui-routes opts)]))
+  [base-path route-data (ui.hello/ui-routes (str base-path "/ui/"))])
