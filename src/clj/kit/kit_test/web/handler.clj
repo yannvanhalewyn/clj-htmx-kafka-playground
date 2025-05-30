@@ -6,7 +6,7 @@
     [reitit.ring :as ring]
     [reitit.swagger-ui :as swagger-ui]))
 
-(defmethod ig/init-key :handler/ring
+(defmethod ig/init-key ::ring-handler
   [_ {:keys [router api-path] :as opts}]
   (ring/ring-handler
    (router)
@@ -30,7 +30,7 @@
                       (ring.response/content-type "text/plain")))}))
    {:middleware [(middleware/wrap-base opts)]}))
 
-(defmethod ig/init-key :router/routes
+(defmethod ig/init-key ::routes
   [_ {:keys [routes]}]
   (mapv (fn [route]
           (if (fn? route)
@@ -38,7 +38,7 @@
             route))
         routes))
 
-(defmethod ig/init-key :router/core
+(defmethod ig/init-key ::ring-router
   [_ {:keys [routes env] :as opts}]
   (if (= env :dev)
     #(ring/router ["" opts routes])

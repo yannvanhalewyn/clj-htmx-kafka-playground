@@ -6,10 +6,10 @@
  :server/http
  {:port #long #or [#env PORT 3000]
   :host #or [#env HTTP_HOST "0.0.0.0"]
-  :handler #ig/ref :handler/ring}
+  :handler #ig/ref :kit.kit-test.web.handler/ring-handler}
 
- :handler/ring
- {:router #ig/ref :router/core
+ :kit.kit-test.web.handler/ring-handler
+ {:router #ig/ref :kit.kit-test.web.handler/ring-router
   :api-path "/api"
   :cookie-secret #or [#env COOKIE_SECRET "NBYXWYYRNALTJSYF"]
   ;; from ring.middleware.defaults. anti-forgery `false` by default because services may not require it
@@ -34,20 +34,17 @@
                                      :content-types true
                                      :default-charset "utf-8"}}}
 
- :reitit.routes/api
- {:base-path "/api"
-  :env #ig/ref :system/env}
-
- :router/routes
+ :kit.kit-test.web.handler/routes
  {:routes [#ig/ref :kit.kit-test.web.api.routes/routes
            #ig/ref :kit.kit-test.web.routes/routes]}
 
  ;; Route handlers
- :kit.kit-test.web.api.routes/routes {}
- :kit.kit-test.web.routes/routes {}
+ :kit.kit-test.web.api.routes/routes
+ {:base-path "/api"}
 
- :router/core
- {:routes #ig/ref :router/routes
-  :env #ig/ref :system/env}
- :reitit.routes/ui {:base-path "",
-                    :env #ig/ref :system/env}}
+ :kit.kit-test.web.routes/routes
+ {}
+
+ :kit.kit-test.web.handler/ring-router
+ {:routes #ig/ref :kit.kit-test.web.handler/routes
+  :env #ig/ref :system/env}}
