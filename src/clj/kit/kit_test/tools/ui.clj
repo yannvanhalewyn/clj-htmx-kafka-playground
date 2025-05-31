@@ -21,3 +21,9 @@
     :name name
     :value val}])
 
+(defn link [url body]
+  [:a.text-link
+   {:href url
+    :hx-get url
+    :hx-target "#app-root"}
+   body])

@@ -13,7 +13,7 @@
 
 ;; log uncaught exceptions in threads
 (Thread/setDefaultUncaughtExceptionHandler
-  (fn [thread ex]
+  (fn [^Thread thread ex]
     (log/error {:what :uncaught-exception
                 :exception ex
                 :where (str "Uncaught exception on" (.getName thread))})))

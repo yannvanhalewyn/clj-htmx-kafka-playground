@@ -11,10 +11,17 @@
          [:meta {:charset "UTF-8"}]
          [:title title]
          (p/include-css "/styles.css")
+
          [:script
           {:src "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
            :type "text/javascript",
-           :defer true}]]
+           :defer true
+           :crossorigin "anonymous"}]
+         [:script
+          {:src "https://unpkg.com/htmx-ext-sse@2.2.3"
+           :type "text/javascript",
+           :defer true
+           :crossorigin "anonymous"}]]
         [:body.bg-firefly
          body]))
     #_{:clj-kondo/ignore [:unresolved-var]}

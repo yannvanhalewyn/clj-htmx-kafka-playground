@@ -38,6 +38,10 @@ body {
   @apply px-3 py-2 bg-gray-100 border-gray-500 rounded-md text-gray-900
 }
 
+.input--dark {
+  @apply py-1 bg-martinique text-gray-100
+}
+
 .text-link {
   @apply cursor-pointer text-blue-500 underline;
 }

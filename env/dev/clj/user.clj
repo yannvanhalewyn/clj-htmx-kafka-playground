@@ -4,7 +4,7 @@
     [clojure.java.io :as io]
     [clojure.pprint]
     [clojure.spec.alpha :as s]
-    [clojure.tools.namespace.repl :as repl] ;; benchmarking
+    [clojure.tools.namespace.repl :as repl]
     [expound.alpha :as expound]
     [integrant.core :as ig]
     [integrant.repl :as ir]
@@ -13,7 +13,7 @@
     [kit.kit-test.config :as config]
     [kit.kit-test.core]
     [lambdaisland.classpath.watch-deps :as watch-deps]
-    [xtdb.api :as xt])) ;; hot loading for deps
+    [xtdb.api :as xt]))
 
 (defn dev-prep!
   []
@@ -47,7 +47,7 @@
   (ir/go)
   (ir/reset)
   (ir/halt)
-  (repl/refresh)
+  (repl/refresh :after 'ir/reset)
   (repl/refresh-all)
   (keys system)
 
@@ -66,16 +66,12 @@
   (kit/install-module :kit/tailwind)
   (kit/install-module :kit/xtdb))
 
-
-
-
-
 (comment
  (require
-   [puget.color.ansi :as color]
-   [puget.printer :as puget]
-   [xtdb.api :as xt]
-   [clojure.tools.logging :as log])
+   '[puget.color.ansi :as color]
+   '[puget.printer :as puget]
+   '[xtdb.api :as xt]
+   '[clojure.tools.logging :as log])
 
  (set! *warn-on-reflection* true)
 
