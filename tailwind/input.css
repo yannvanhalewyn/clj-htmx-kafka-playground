@@ -16,6 +16,7 @@
 
 @theme {
   --font-display: "Gilroy", "sans-serif";
+  --color-lavender: #DBD9E8;
   --color-carrara: #F0F0F0;
   --color-martinique: #494753;
   --color-firefly: #0D0B19;
@@ -30,7 +31,7 @@ body {
 }
 
 .heading {
-  @apply text-3xl font-black;
+  @apply text-3xl font-semibold text-lavender;
 }
 
 .input {

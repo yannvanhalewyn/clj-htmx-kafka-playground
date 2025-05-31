@@ -51,6 +51,13 @@
   (repl/refresh-all)
   (keys system)
 
+  (xt/entity-history (db)
+    :person
+    :asc
+    {:with-docs? true
+     :start-valid-time #inst "2025-05-31T09:25:40.000-00:00"})
+
+
   ;; Install KIT module
   (kit/sync-modules)
   (kit/list-modules)
