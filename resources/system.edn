@@ -37,7 +37,11 @@
 
  :kit.kit-test.web.handler/ring-router
  {:routes [#ig/ref :kit.kit-test.web.api.routes/routes
-           #ig/ref :kit.kit-test.web.ui.routes/routes]}
+           #ig/ref :kit.kit-test.web.ui.routes/routes]
+  :plugins [#ig/ref :kit.kit-test.web.sse/sse-listener]}
+
+ :kit.kit-test.web.sse/sse-listener
+ {}
 
  ;; Route handlers
  :kit.kit-test.web.api.routes/routes

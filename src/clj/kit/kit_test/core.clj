@@ -2,12 +2,12 @@
   (:require
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
-    [kit.edge.server.http-kit]
     [kit.kit-test.config :as config]
     [kit.kit-test.db]
     [kit.kit-test.env :refer [defaults]] ;
     [kit.kit-test.web.api.routes]
     [kit.kit-test.web.handler]
+    [kit.kit-test.web.jetty]
     [kit.kit-test.web.ui.routes])
   (:gen-class))
 

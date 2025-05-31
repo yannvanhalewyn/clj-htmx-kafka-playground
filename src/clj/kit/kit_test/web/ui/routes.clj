@@ -4,6 +4,7 @@
     [kit.kit-test.tools.ui :as ui]
     [kit.kit-test.web.middleware.exception :as exception]
     [kit.kit-test.web.middleware.formats :as formats]
+    [kit.kit-test.web.ui.delayed-render-sse :as delayed-render-sse]
     [kit.kit-test.web.ui.hx-playground :as hx-playground]
     [kit.kit-test.web.ui.layout :as layout]
     [kit.kit-test.web.ui.person-history :as person-history]
@@ -21,12 +22,15 @@
     (fn [req]
       person-history/person-history
       hx-playground/hx-playground
+      delayed-render-sse/delayed-render
       (layout/if-page-load req
         [:div.mt-4.space-y-3
          [:div
           (ui/link "person-history" "Person History")]
          [:div
-          (ui/link "hx-playground" "HTMX Playground")]]))))
+          (ui/link "hx-playground" "HTMX Playground")]
+         [:div
+          (ui/link "delayed-render" "Delayed Render")]]))))
 
 (comment
   (ui-routes ""))

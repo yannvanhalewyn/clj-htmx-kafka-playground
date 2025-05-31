@@ -14,7 +14,7 @@
        children]]]))
 
 (defn if-page-load [req & children]
-  (sc.api/spy :req)
+  ;;(sc.api/spy :req)
   (comment
     (sc.api/letsc 6 (:headers req))
     (sc.api/letsc 6 (htmx/hx-request? req)))

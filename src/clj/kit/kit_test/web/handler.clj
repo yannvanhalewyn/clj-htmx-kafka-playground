@@ -39,5 +39,8 @@
                   [wrap-assoc-db db-node]]}))
 
 (defmethod ig/init-key ::ring-router
-  [_ {:keys [routes]}]
-  (ring/router routes))
+  [_ {:keys [routes plugins]}]
+  (ring/router
+    ["" {:middleware (into [] (mapcat :middleware) plugins)}
+     (concat routes
+       (apply concat (map :routes plugins)))]))

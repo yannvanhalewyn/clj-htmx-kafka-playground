@@ -8,3 +8,9 @@
 
 (defn post? [req]
   (= (:request-method req) :post))
+
+(defn wrap-assoc
+  "Middleware for assoc'ing various keys onto requests"
+  [handler k v]
+  (fn [req]
+    (handler (assoc req k v))))

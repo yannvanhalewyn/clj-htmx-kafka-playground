@@ -1,7 +1,8 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
   (:require
-    [clojure.java.io :as io]
+    [hashp.preload]
+    [sc.api]
     [clojure.pprint]
     [clojure.spec.alpha :as s]
     [clojure.tools.namespace.repl :as repl]
@@ -12,7 +13,9 @@
     [kit.api :as kit]
     [kit.kit-test.config :as config]
     [kit.kit-test.core]
+    [kit.kit-test.web.sse :as sse]
     [lambdaisland.classpath.watch-deps :as watch-deps]
+    [portal.api :as portal]
     [xtdb.api :as xt]))
 
 (defn dev-prep!
@@ -36,20 +39,35 @@
 (dev-prep!)
 (repl/set-refresh-dirs "src/clj" "env/dev/")
 
+(defonce portal-instance (atom nil))
+
+(defn start-portal! []
+  (add-tap #'portal/submit)
+  (reset! portal-instance
+    (portal/open
+      {:app false
+       :port 60342})))
+
 (defn db-node []
   (:kit.kit-test.db/db-node system))
 
 (defn db []
   (xt/db (db-node)))
 
+(defn sse-listener []
+  (-> system :kit.kit-test.web.sse/sse-listener))
+
 (comment
   (watch-deps/start! {:aliases [:dev :test]})
   (ir/go)
   (ir/reset)
   (ir/halt)
-  (repl/refresh :after 'ir/reset)
   (repl/refresh-all)
   (keys system)
+  (sse/send! (sse-listener)
+    {:sse/event "message"
+     :sse/data nil
+     :sse/topic "delayed-message-test"})
 
   (xt/entity-history (db)
     :person
@@ -66,42 +84,28 @@
   (kit/install-module :kit/tailwind)
   (kit/install-module :kit/xtdb))
 
-(comment
- (require
-   '[puget.color.ansi :as color]
-   '[puget.printer :as puget]
-   '[xtdb.api :as xt]
-   '[clojure.tools.logging :as log])
+(require
+  '[puget.color.ansi :as color]
+  '[puget.printer :as puget]
+  '[clojure.tools.logging :as log])
 
- (set! *warn-on-reflection* true)
+(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- (require 'hashp.preload)
- (alter-var-root #'hashp.preload/print-opts assoc :namespace-maps false)
- (alter-var-root #'hashp.preload/print-log
-   (constantly
-     (fn print-log [trace form value]
-       (locking hashp.preload/lock
-         (log/debug
-           (str
-             (color/sgr "#p" :red) (color/sgr (hashp.preload/trace-str trace) :green) "\n\n"
-             ;;(str (puget/pprint-str form hashp.preload/no-color-print-opts) "\n\n")
-             (puget/pprint-str value hashp.preload/print-opts)
-             "\n"))))))
+(alter-var-root #'hashp.preload/print-opts assoc :namespace-maps false)
+(alter-var-root #'hashp.preload/print-log
+  (constantly
+    (fn print-log [trace form value]
+      (locking hashp.preload/lock
+        (log/debug
+          (str
+            (color/sgr "#p" :red) (color/sgr (hashp.preload/trace-str trace) :green) "\n\n"
+            ;;(str (puget/pprint-str form hashp.preload/no-color-print-opts) "\n\n")
+            (puget/pprint-str value hashp.preload/print-opts)
+            "\n"))))))
 
 ; don't use namespaced maps by default in the REPL
- (defmethod print-method clojure.lang.IPersistentMap [m, ^java.io.Writer w]
-   (#'clojure.core/print-meta m w)
-   (#'clojure.core/print-map m #'clojure.core/pr-on w))
-
- (do
-  #p
-  {:people
-   (for [i (range 10)]
-    {:person/first-name (str "John " i)
-     :person/last-name "Doe"})
-   :pets
-   (for [i (range 10)]
-    {:pet/first-name (str "Cat " i)
-     :pet/last-name "Doe"})}))
+(defmethod print-method clojure.lang.IPersistentMap [m, ^java.io.Writer w]
+  (#'clojure.core/print-meta m w)
+  (#'clojure.core/print-map m #'clojure.core/pr-on w))
