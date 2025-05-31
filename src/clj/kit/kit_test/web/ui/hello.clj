@@ -1,11 +1,13 @@
 (ns kit.kit-test.web.ui.hello
   (:require
-    [kit.kit-test.tools.date :as date]
-    [kit.kit-test.tools.request :as request]
-    [kit.kit-test.tools.ui :as ui]
-    [kit.kit-test.web.htmx :as htmx]
-    [simpleui.core :as su :refer [defcomponent]]
-    [xtdb.api :as xt]))
+   [clojure.string :as str]
+   [kit.kit-test.tools.date :as date]
+   [kit.kit-test.tools.request :as request]
+   [kit.kit-test.tools.ui :as ui]
+   [kit.kit-test.web.htmx :as htmx]
+   [simpleui.core :as su :refer [defcomponent]]
+   [xtdb.api :as xt]
+   [clojure.core :as c]))
 
 (defcomponent ^:endpoint hello [_req my-name]
   [:div#hello
@@ -55,9 +57,36 @@
     [:button.btn {:hx-get "show-user"}
      "Cancel"]]])
 
+(defn search-key [person]
+  (str/lower-case
+   (str (full-name person) " "
+        (:person/email person))))
+
+(comment
+  (search-key
+    {:person/first-name "John"
+     :person/last-name "Doe"
+     :person/email "john.doe@example.com"}))
+
+(defcomponent ^:endpoint history-items [req q]
+  (let [q (some-> q str/trim str/lower-case)
+        entity-history
+        (cond->>
+          (xt/entity-history (xt/db (:db-node req)) :person :desc
+            {:with-docs? true})
+          q (filter #(str/includes? (search-key (:xtdb.api/doc %)) q)))]
+    [:ul.mt-2.space-y-4
+     (for [{:keys [xtdb.api/doc xtdb.api/tx-time]} entity-history]
+       [:li
+        [:div
+         [:label.block.font-semibold (full-name doc)]
+         [:span.italic (:person/email doc)]]
+        [:p.italic "Edited at " (date/format-date tx-time)]])]))
+
 (defcomponent ^:endpoint show-user [req first-name last-name email]
   ;; make sure form-edit is included in endpoints
   form-edit
+  history-items
   (let [person
         {:person/first-name first-name
          :person/last-name last-name
@@ -78,17 +107,22 @@
        [:button.mt-1.text-link.margin
         {:hx-get (str 'form-edit)}
         "Edit"]]]
+
      [:div.mt-4
-      [:h2.heading "History"]
-      [:ul.mt-2.space-y-4
-       (for [{:keys [xtdb.api/doc xtdb.api/tx-time]}
-             (xt/entity-history (xt/db (:db-node req)) :person
-               :desc {:with-docs? true})]
-         [:li
-          [:div
-           [:label.block.font-semibold (full-name doc)]
-           [:span.italic (:person/email doc)]]
-          [:p.italic "Edited at " (date/format-date tx-time)]])]]]))
+      [:div.flex.items-center.justify-between
+       [:h2.heading "Entity History"]
+       [:input.input
+        {:type "text"
+         :id "q"
+         :name "q"
+         :placeholder "Search..."
+         :hx-trigger "input changed delay:100ms"
+         :hx-get (str 'history-items)
+         :hx-target "#history-items"}]]
+
+      [:div
+       {:id "history-items"}
+       (history-items req nil)]]]))
 
 (defn ui-routes [base-path]
   (su/make-routes
@@ -97,7 +131,10 @@
       (htmx/page {}
         [:div.mt-12.p-12.max-w-lg.mx-auto.rounded-2xl
          {:class "border border-carrara"}
-         [:h1.heading "HTMX Test App"]
+         [:div
+          [:h1.heading "HTMX Test App"]]
+
+         ;; Greeter
          [:div.mt-4
           [:label.block.font-semibold.mr-4 "Name"]
           [:input.input.mt-1.w-full
@@ -111,6 +148,7 @@
           [:div.mt-4
            (hello req nil)]]
 
+         ;; Message echo
          [:div.mt-4
           [:label.block.font-semibold.mr-4 "Message"]
           [:textarea.input.mt-1.w-full
@@ -125,6 +163,8 @@
            (cart req nil)]]
 
          [:hr.border-carrara]
+
+         ;; Person and entity history
          [:div.mt-4
           (let [{:person/keys [first-name last-name email]}
                 (or (find-person (xt/db (:db-node req)))

@@ -65,3 +65,47 @@
   (kit/install-module :kit/simpleui)
   (kit/install-module :kit/tailwind)
   (kit/install-module :kit/xtdb))
+
+
+
+
+
+(comment
+ (require
+   [puget.color.ansi :as color]
+   [puget.printer :as puget]
+   [xtdb.api :as xt]
+   [clojure.tools.logging :as log])
+
+ (set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ (require 'hashp.preload)
+ (alter-var-root #'hashp.preload/print-opts assoc :namespace-maps false)
+ (alter-var-root #'hashp.preload/print-log
+   (constantly
+     (fn print-log [trace form value]
+       (locking hashp.preload/lock
+         (log/debug
+           (str
+             (color/sgr "#p" :red) (color/sgr (hashp.preload/trace-str trace) :green) "\n\n"
+             ;;(str (puget/pprint-str form hashp.preload/no-color-print-opts) "\n\n")
+             (puget/pprint-str value hashp.preload/print-opts)
+             "\n"))))))
+
+; don't use namespaced maps by default in the REPL
+ (defmethod print-method clojure.lang.IPersistentMap [m, ^java.io.Writer w]
+   (#'clojure.core/print-meta m w)
+   (#'clojure.core/print-map m #'clojure.core/pr-on w))
+
+ (do
+  #p
+  {:people
+   (for [i (range 10)]
+    {:person/first-name (str "John " i)
+     :person/last-name "Doe"})
+   :pets
+   (for [i (range 10)]
+    {:pet/first-name (str "Cat " i)
+     :pet/last-name "Doe"})}))

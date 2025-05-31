@@ -6,13 +6,13 @@
          run       {:doc  "starts the app"
                     :task (if (fs/windows?)
                             (clojure {:dir "."} "-M:dev")
-                            (shell {:dir "."} "clj -M:dev"))}
+                            (shell {:dir "."} "clj -M:dev:local-dev"))}
 
          nrepl     {:doc  "starts the nREPL"
-                    :task (clojure {:dir "."} "-M:dev:nrepl")}
+                    :task (clojure {:dir "."} "-M:dev:local-dev:nrepl")}
 
          cider     {:doc  "starts the cider"
-                    :task (clojure {:dir "."} "-M:dev:cider")}
+                    :task (clojure {:dir "."} "-M:dev:local-dev:cider")}
 
          test      {:doc  "runs tests"
                     :task (clojure {:dir "."} "-M:test")}
