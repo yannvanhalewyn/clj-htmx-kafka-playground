@@ -6,8 +6,12 @@
     [reitit.swagger-ui :as swagger-ui]
     [ring.util.http-response :as ring.response]))
 
+(defn wrap-assoc-db [handler db-node]
+  (fn [req]
+    (handler (assoc req :db-node db-node))))
+
 (defmethod ig/init-key ::ring-handler
-  [_ {:keys [router api-path] :as opts}]
+  [_ {:keys [router api-path db-node] :as opts}]
   (ring/ring-handler
     router
     (ring/routes
@@ -31,8 +35,9 @@
          (constantly (-> {:status 406, :body "Not acceptable"}
                        #_{:clj-kondo/ignore [:unresolved-var]}
                        (ring.response/content-type "text/plain")))}))
-    {:middleware [(middleware/wrap-base opts)]}))
+    {:middleware [(middleware/wrap-base opts)
+                  [wrap-assoc-db db-node]]}))
 
 (defmethod ig/init-key ::ring-router
-  [_ {:keys [routes] :as opts}]
+  [_ {:keys [routes]}]
   (ring/router routes))

@@ -20,8 +20,18 @@
            ;; kit Libs
            io.github.kit-clj/kit-core      {:mvn/version "1.0.9"}
            io.github.kit-clj/kit-http-kit  {:mvn/version "1.0.5"}
+           io.github.kit-clj/kit-xtdb      {:mvn/version "1.0.4"}
            simpleui/simpleui {:git/url "https://github.com/whamtet/simpleui",
-                              :git/sha "a107d7a8a69755dae6cd9954992614a86504c257"}}
+                              :git/sha "a107d7a8a69755dae6cd9954992614a86504c257"}
+           ;;com.xtdb/xtdb-api {:mvn/version "v2.0.0-beta8"}
+           ;;com.xtdb/xtdb-core {:mvn/version "v2.0.0-beta8"}}
+           com.xtdb/xtdb-core {:mvn/version "1.24.5"}
+           com.xtdb/xtdb-rocksdb {:mvn/version "1.24.5"}}
+
+ ;; Required for XTDB
+ ;; https://docs.xtdb.com/drivers/clojure.html
+ :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
+            "-Dio.netty.tryReflectionSetAccessible=true"]
 
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.6"}}

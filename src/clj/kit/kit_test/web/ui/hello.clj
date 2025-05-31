@@ -1,7 +1,10 @@
 (ns kit.kit-test.web.ui.hello
   (:require
-    [kit.kit-test.web.htmx :as htmx]
-    [simpleui.core :as su :refer [defcomponent]]))
+   [kit.kit-test.tools.request :as request]
+   [kit.kit-test.tools.ui :as ui]
+   [kit.kit-test.web.htmx :as htmx]
+   [simpleui.core :as su :refer [defcomponent]]
+   [xtdb.api :as xt]))
 
 (defcomponent ^:endpoint hello [_req my-name]
   [:div#hello
@@ -13,38 +16,35 @@
    (when cart-msg
      [:span.italic.ml-2 "Cart: " cart-msg])])
 
-(defn hidden [name val]
-  [:input.input
-   {:type "hidden"
-    :id name
-    :name name
-    :value val}])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Person Form
 
-(defn text [name val]
-  [:input.input
-   {:type "text"
-    :id name
-    :name name
-    :value val}])
+(defn find-person [db]
+  (xt/entity db :person))
 
-(defn email [name val]
-  [:input.input
-   {:type "email"
-    :id name
-    :name name
-    :value val}])
+(defn upsert-person! [db-node person]
+  (xt/submit-tx db-node
+    [[::xt/put (assoc person :xt/id :person)]]))
+
+(comment
+  (find-person (user/db))
+  (upsert-person! (user/db-node)
+    {:person/first-name "Tom"
+     :person/last-name "Riddle"
+     :person/email "voldymort@hogwards.edu"}))
 
 (defcomponent ^:endpoint form-edit [req first-name last-name email*]
-  [:form.space-y-2 {:hx-put "show-user"}
+  [:form.space-y-2
+   {:hx-patch (str 'show-user)}
    [:div
     [:label.font-semibold.mr-2 "First Name"]
-    (text "first-name" first-name)]
+    (ui/text "first-name" first-name)]
    [:div
     [:label.font-semibold.mr-2 "Last Name"]
-    (text "last-name" last-name)]
+    (ui/text "last-name" last-name)]
    [:div
     [:label.font-semibold.mr-2 "Email Address"]
-    (email "email" email*)]
+    (ui/email "email" email*)]
    [:div.mt-4
     [:button.btn.mr-2 "Save"]
     [:button.btn {:hx-get "show-user"}
@@ -53,17 +53,22 @@
 (defcomponent ^:endpoint show-user [req first-name last-name email]
   ;; make sure form-edit is included in endpoints
   form-edit
+  (when (request/patch? req)
+    (upsert-person! (:db-node req)
+      {:person/first-name first-name
+       :person/last-name last-name
+       :person/email email}))
   [:form.space-y-2
    {:hx-target "this"}
    [:div.space-y-2
-    (hidden "first-name" first-name)
+    (ui/hidden "first-name" first-name)
     [:div [:label.font-semibold "First Name"] ": " first-name]
-    (hidden "last-name" last-name)
+    (ui/hidden "last-name" last-name)
     [:div [:label.font-semibold "Last Name"] ": " last-name]
-    (hidden "email" email)
+    (ui/hidden "email" email)
     [:div [:label.font-semibold "Email"] ": " email]
     [:button.text-link.margin
-     {:hx-put "form-edit"}
+     {:hx-get (str 'form-edit)}
      "Edit"]]])
 
 (defn ui-routes [base-path]
@@ -102,6 +107,12 @@
 
          [:hr.border-carrara]
          [:div.mt-4
-          (show-user req "Joe" "Blow" "joe@blow.com")]]))))
+          (let [{:person/keys [first-name last-name email]}
+                (or (find-person (xt/db (:db-node req)))
+                    {:person/first-name "John"
+                     :person/last-name "Doe"
+                     :person/email "john.doe@example.com"})]
+            (show-user req first-name last-name email))]]))))
+
 (comment
   (ui-routes "/ui/"))
