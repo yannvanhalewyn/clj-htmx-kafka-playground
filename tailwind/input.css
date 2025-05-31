@@ -2,9 +2,16 @@
 
 @font-face {
     font-family: 'Gilroy';
-    src: url('/fonts/Gilroy-Medium.ttf'), url('/fonts/Gilroy-Semibold.edium.ttf') format('truetype');
-    font-weight: normal, semibold;
+    src: url('/fonts/Gilroy-Medium.ttf') format('truetype');
+    font-weight: 400;
     font-style: normal;
+}
+
+@font-face {
+    font-family: 'Gilroy';
+    src: url('/fonts/Gilroy-Semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: semibold;
 }
 
 @theme {
@@ -28,4 +35,16 @@ body {
 
 .input {
   @apply px-3 py-2 bg-gray-100 border-gray-500 rounded-md text-gray-900
+}
+
+.text-link {
+  @apply cursor-pointer text-blue-500 underline;
+}
+
+.btn {
+  @apply cursor-pointer px-3 py-2 bg-martinique rounded-md hover:bg-orange-500 transition-colors duration-200;
+}
+
+.btn-primary {
+  @apply bg-orange-500;
 }
