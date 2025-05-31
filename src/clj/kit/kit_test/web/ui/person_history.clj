@@ -1,11 +1,12 @@
 (ns kit.kit-test.web.ui.person-history
   (:require
-   [clojure.string :as str]
-   [kit.kit-test.tools.date :as date]
-   [kit.kit-test.tools.request :as request]
-   [kit.kit-test.tools.ui :as ui]
-   [simpleui.core :as su]
-   [xtdb.api :as xt]))
+    [clojure.string :as str]
+    [kit.kit-test.tools.date :as date]
+    [kit.kit-test.tools.request :as request]
+    [kit.kit-test.tools.ui :as ui]
+    [simpleui.core :as su]
+    [xtdb.api :as xt]
+    [kit.kit-test.web.ui.layout :as layout]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DB
@@ -22,8 +23,8 @@
 
 (defn search-key [person]
   (str/lower-case
-   (str (full-name person) " "
-        (:person/email person))))
+    (str (full-name person) " "
+         (:person/email person))))
 
 (comment
   (find-person (user/db))
@@ -84,10 +85,11 @@
     (when (request/patch? req)
       (upsert-person! (:db-node req) person))
 
-    (list
+    (layout/if-page-load req
+      (ui/link "/" "← Back")
       [:form.space-y-2
        {:hx-target "this"}
-       [:div
+       [:div.mt-4
         (ui/hidden "first-name" first-name)
         (ui/hidden "last-name" last-name)
         (ui/hidden "email" email)
@@ -98,9 +100,11 @@
          {:hx-get (str 'form-edit)}
          "Edit"]]]
 
-      [:div.mt-4
+      [:hr.mt-4.border-carrara]
+
+      [:div.mt-6
        [:div.flex.items-center.justify-between
-        [:h2.heading "Entity History"]
+        [:h2.heading-2.text-md "Entity History"]
         [:input.input.input--dark
          {:type "text"
           :id "q"
@@ -110,7 +114,7 @@
           :hx-get (str 'history-items)
           :hx-target "#history-items"}]]
 
-       [:div
+       [:div.mt-6
         {:id "history-items"}
         (history-items req nil)]])))
 

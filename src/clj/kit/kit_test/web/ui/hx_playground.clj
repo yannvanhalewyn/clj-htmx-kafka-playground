@@ -1,5 +1,7 @@
 (ns kit.kit-test.web.ui.hx-playground
   (:require
+    [kit.kit-test.tools.ui :as ui]
+    [kit.kit-test.web.ui.layout :as layout]
     [simpleui.core :as su]))
 
 (su/defcomponent ^:endpoint hello [_req my-name]
@@ -16,7 +18,8 @@
   hello
   cart
   ;; Greeter
-  (list
+  (layout/if-page-load req
+    (ui/link "/" "← Back")
     [:div.mt-4
      [:label.block.font-semibold.mr-4 "Name"]
      [:input.input.mt-1.w-full

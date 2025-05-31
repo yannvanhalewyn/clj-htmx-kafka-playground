@@ -25,5 +25,6 @@
   [:a.text-link
    {:href url
     :hx-get url
-    :hx-target "#app-root"}
+    :hx-target "#app-root"
+    :hx-push-url "true"}
    body])

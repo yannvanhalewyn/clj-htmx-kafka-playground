@@ -30,8 +30,12 @@ body {
   @apply bg-firefly text-white;
 }
 
-.heading {
+.heading-1 {
   @apply text-3xl font-semibold text-lavender;
+}
+
+.heading-2 {
+  @apply text-2xl font-semibold text-lavender;
 }
 
 .input {
@@ -39,7 +43,7 @@ body {
 }
 
 .input--dark {
-  @apply py-1 bg-martinique text-gray-100
+  @apply px-2 py-1 bg-martinique text-white outline-martinique
 }
 
 .text-link {

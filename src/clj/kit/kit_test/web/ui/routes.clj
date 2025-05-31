@@ -21,7 +21,7 @@
     (fn [req]
       person-history/person-history
       hx-playground/hx-playground
-      (layout/full-page req
+      (layout/if-page-load req
         [:div.mt-4.space-y-3
          [:div
           (ui/link "person-history" "Person History")]
