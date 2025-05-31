@@ -10,7 +10,7 @@
   (m/schema
     [:map
      [:sse/event :string]
-     [:sse/data :any]
+     [:sse/data [:maybe :string]]
      [:sse/topic :string]]))
 
 (defn event-stream-msg [{:keys [sse/event sse/data]}]
@@ -23,9 +23,9 @@
         ;; TODO each login session adds a new key and never gets cleared
         clients (atom {})]
     (a/go-loop []
-      (when-let [payload (a/<! events-chan)]
-        (doseq [output-ch (get @clients (:sse/topic payload))]
-          (a/>! output-ch (event-stream-msg payload)))
+      (when-let [sse-event (a/<! events-chan)]
+        (doseq [output-ch (get @clients (:sse/topic sse-event))]
+          (a/>! output-ch (event-stream-msg sse-event)))
         (recur)))
     {::events-chan events-chan
      :handler
@@ -60,9 +60,8 @@
 (defn send! [req sse-event]
   (a/>!! (::events-chan req) sse-event))
 
-(defn hx-listener [{:keys [sse/topic sse/event]} & children]
+(defn hx-listener [{:keys [sse/topic]} & children]
   [:div
    {:hx-ext "sse"
-    :sse-connect (sse-url topic)
-    :sse-swap event}
+    :sse-connect (sse-url topic)}
    children])
