@@ -2,7 +2,7 @@
   (:require
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
-    [kit.edge.server.undertow]
+    [kit.edge.server.http-kit]
     [kit.kit-test.config :as config]
     [kit.kit-test.env :refer [defaults]] ;
     [kit.kit-test.web.api.routes]
