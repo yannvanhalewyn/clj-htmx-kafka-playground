@@ -1,6 +1,9 @@
 clean:
 	rm -rf target
 
+css:
+	npx @tailwindcss/cli -i ./tailwind/input.css -o ./resources/public/styles.css --watch
+
 run:
 	clj -M:dev
 

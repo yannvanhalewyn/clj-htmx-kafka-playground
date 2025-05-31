@@ -14,22 +14,30 @@
     base-path
     (fn [req]
       (htmx/page {}
-        [:label {:style "margin-right: 10px"}
-         "What is your name?"]
-        [:input {:type "text"
-                 :name "my-name"
-                 :hx-patch "hello"
-                 :hx-trigger "input changed delay:200ms"
-                 :hx-target "#hello"
-                 :hx-swap "outerHTML"}]
-        (hello req "")
-        [:input {:type "text"
-                 :name "cart-msg"
-                 :hx-patch "cart"
-                 :hx-trigger "input changed delay:200ms"
-                 :hx-target "#cart"
-                 :hx-swap "outerHTML"}]
-        (cart req "")))))
+        [:div.p-12
+         [:div
+          [:label.mr-4 "Name"]
+          [:input
+           {:type "text"
+            :name "my-name"
+            :placeholder "Insert name"
+            :hx-patch "hello"
+            :hx-trigger "input changed delay:200ms"
+            :hx-target "#hello"
+            :hx-swap "outerHTML"}]
+          (hello req "")]
+
+         [:div
+          [:label.mr-4 "Message"]
+          [:input
+           {:type "text"
+            :name "cart-msg"
+            :placeholder "Insert message"
+            :hx-patch "cart"
+            :hx-trigger "input changed delay:200ms"
+            :hx-target "#cart"
+            :hx-swap "outerHTML"}]]
+         (cart req "")]))))
 
 (comment
   (ui-routes "/ui/"))

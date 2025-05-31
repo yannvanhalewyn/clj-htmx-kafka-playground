@@ -10,7 +10,11 @@
         [:head
          [:meta {:charset "UTF-8"}]
          [:title title]
-         [:script {:src "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" :defer true}]]
+         (p/include-css "/styles.css")
+         [:script
+          {:src "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
+           :type "text/javascript",
+           :defer true}]]
         [:body
          body]))
     #_{:clj-kondo/ignore [:unresolved-var]}

@@ -43,4 +43,7 @@
   (repl/refresh-all)
 
   ;; Install KIT module
-  (kit/install-module :kit/htmx))
+  (kit/list-modules)
+  (kit/install-module :kit/htmx)
+  (kit/install-module :kit/simpleui)
+  (kit/install-module :kit/tailwind))
