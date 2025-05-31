@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: 'Gilroy';
+    src: url('/fonts/Gilroy-Medium.ttf'), url('/fonts/Gilroy-Semibold.edium.ttf') format('truetype');
+    font-weight: normal, semibold;
+    font-style: normal;
+}
+
+@theme {
+  --font-display: "Gilroy", "sans-serif";
+  --color-carrara: #F0F0F0;
+  --color-martinique: #494753;
+  --color-firefly: #0D0B19;
+  /* --color-fireflyy: rgb(13,11,25); */
+  /* --color-red-50: oklch(0.16030.0292289.22); */
+}
+
 body {
-  @apply bg-gray-900 text-white;
+  font-family: 'Gilroy';
+  /* background-color: #121026; */
+  @apply bg-firefly text-white;
+}
+
+.heading {
+  @apply text-3xl font-black;
+}
+
+.input {
+  @apply px-3 py-2 bg-gray-100 border-gray-500 rounded-md text-gray-900
 }

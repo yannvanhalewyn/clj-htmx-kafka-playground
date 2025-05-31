@@ -15,7 +15,7 @@
           {:src "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
            :type "text/javascript",
            :defer true}]]
-        [:body
+        [:body.bg-firefly
          body]))
     #_{:clj-kondo/ignore [:unresolved-var]}
     (ring.response/content-type "text/html")))
