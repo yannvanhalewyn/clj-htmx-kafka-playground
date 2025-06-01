@@ -18,13 +18,14 @@
                                             :exclusions [com.cognitect/transit-clj]}
            metosin/muuntaja                {:mvn/version "0.6.11"}
 
-           ;; kit Libs
+           ;; Application
            io.github.kit-clj/kit-core      {:mvn/version "1.0.9"}
            ring/ring-jetty-adapter         {:mvn/version "1.14.1"}
            io.github.kit-clj/kit-xtdb      {:mvn/version "1.0.4"}
            io.simpleui/simpleui            {:mvn/version "1.6.0"}
            com.xtdb/xtdb-core              {:mvn/version "1.24.5"}
-           com.xtdb/xtdb-rocksdb           {:mvn/version "1.24.5"}}
+           com.xtdb/xtdb-rocksdb           {:mvn/version "1.24.5"}
+           org.clojure/core.async          {:mvn/version "1.8.741"}}
 
  ;; Required for XTDB
  ;; https://docs.xtdb.com/drivers/clojure.html

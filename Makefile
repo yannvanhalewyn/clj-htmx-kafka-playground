@@ -15,3 +15,9 @@ test:
 
 uberjar:
 	clj -T:build all
+
+docker:
+	docker build -t kit-test .
+
+docker-run:
+	docker run -p 3000:3000 kit-test
