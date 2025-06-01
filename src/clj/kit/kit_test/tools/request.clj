@@ -14,3 +14,9 @@
   [handler k v]
   (fn [req]
     (handler (assoc req k v))))
+
+(defn wrap-merge
+  "Middleware for merging data onto request"
+  [handler coll]
+  (fn [req]
+    (handler (merge req coll))))

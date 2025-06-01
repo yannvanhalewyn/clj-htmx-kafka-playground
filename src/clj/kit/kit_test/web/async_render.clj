@@ -3,7 +3,9 @@
     [clojure.core.async :as a]
     [clojure.tools.logging :as log]
     [hiccup2.core :as h]
-    [kit.kit-test.web.sse :as sse]))
+    [kit.kit-test.web.sse :as sse])
+  (:import
+    [java.util.concurrent CancellationException]))
 
 (defn suspense [req {:keys [placeholder key sse-session]} delayed-content]
   (future
@@ -11,8 +13,14 @@
       (let [html (str (h/html @delayed-content))]
         (sse/send! req
           (sse/new-message sse-session key html)))
+      (sse/unregister-cleanup! req sse-session [::suspense key])
+      ;; Cancellation exceptions are expected
+      (catch CancellationException _e)
       (catch Exception e
         (log/error e "Error in delayed render"))))
+  (sse/register-cleanup! req sse-session
+    [::suspense key]
+    #(future-cancel delayed-content))
   [:div {:sse-swap key}
    placeholder])
 
@@ -22,13 +30,27 @@
   more times. Every hiccup message will be sent to the client via SSE. Once
   done, calling the done-fn."
   [req {:keys [key sse-session] :as params} chime-fn]
-  (let [hiccup-ch (a/chan)]
-    (chime-fn hiccup-ch #(a/close! hiccup-ch))
+  (let [hiccup-ch (a/chan)
+        done-fn (fn []
+                 (a/close! hiccup-ch)
+                 (sse/unregister-cleanup! req sse-session [::stream key]))]
+
+    ;; Register the cleanup for if the client disconnects
+    (sse/register-cleanup! req sse-session
+      [::stream key]
+      done-fn)
+
+    ;; Start the caller's routine
+    (chime-fn hiccup-ch done-fn)
+
+    ;; Send received hiccup via SSE
     (a/go-loop []
       (when-let [hiccup (a/<! hiccup-ch)]
         (sse/send! req
           (sse/new-message sse-session key
             (str (h/html hiccup))))
         (recur)))
+
+    ;; Return an HTMX component
     [:div (assoc (select-keys params [:hx-swap])
             :sse-swap key)]))

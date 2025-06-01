@@ -19,7 +19,7 @@
     {:comment (str "Comment " i)}))
 
 (defn- get-events []
-  (for [i (map inc (range 30))]
+  (for [i (map inc (range 20))]
     {:name (str "Event " i)}))
 
 (defn- section [title & children]
@@ -64,8 +64,9 @@
               (a/go-loop [[cur & others] (get-events)]
                 (a/<! (a/timeout 500))
                 (if cur
-                  (do
-                    (a/>! hiccup-ch [:p (:name cur)])
+                  ;; Returns nil when channel is closed
+                  ;; A closed channel means the client left.
+                  (when (a/>! hiccup-ch [:p (:name cur)])
                     (recur others))
                   (do
                     (a/>! hiccup-ch [:p "No more events..."])
@@ -74,21 +75,10 @@
 (comment
   (defn replace-body [msg]
     (sse/send! (user/sse-listener)
-      {:sse/event "delayed-comments"
+      {:sse/event "comments"
        :sse/data (str (h/html [:p msg]))
        :sse/topic SSE_TOPIC_NAME
        ;; Get session from browser connection or logs
        :sse/session-id #uuid "e73961a4-1cb1-4001-a464-c4dff32df1a5"}))
   (replace-body "Hello!")
-  (replace-body "Replace async")
-
-  (def stop-ch (a/chan))
-
-  (a/go-loop [i 1]
-    (replace-body (str "Count: " i))
-    (let [[msg ch] (a/alts!! [stop-ch (a/timeout 1000)])]
-      (if (= ch stop-ch)
-        (replace-body msg)
-        (recur (inc i)))))
-
-  (a/put! stop-ch "Stop!"))
+  (replace-body "Replace async"))

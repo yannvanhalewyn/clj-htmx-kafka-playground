@@ -1,6 +1,7 @@
 (ns kit.kit-test.web.sse
   (:require
     [clojure.core.async :as a]
+    [clojure.tools.logging :as log]
     [integrant.core :as ig]
     [kit.kit-test.tools.request :as request]
     [kit.kit-test.tools.response :as response]
@@ -43,8 +44,8 @@
   (str "/sse?"
        (ring.codec/form-encode
          (u/prune
-          {:topic (:sse/topic session-params)
-           :session-id (:sse/session-id session-params)}))))
+           {:topic (:sse/topic session-params)
+            :session-id (:sse/session-id session-params)}))))
 
 (comment
   (decode-session-query-params
@@ -83,9 +84,17 @@
        "data:" data response/EOL
        response/EOL))
 
+(defn register-cleanup! [req sse-session cleanup-key f]
+  (swap! (::sessions req) assoc-in
+    [::cleanup-handlers (session-path sse-session) cleanup-key]
+    f))
+
+(defn unregister-cleanup! [req sse-session cleanup-key]
+  (swap! (::sessions req) u/dissoc-in
+    [::cleanup-handlers (session-path sse-session) cleanup-key]))
+
 (defn- start-listener! []
   (let [events-chan (a/chan 10000)
-        ;; TODO each login session adds a new key and never gets cleared
         sessions (atom {})]
     (a/go-loop []
       (when-let [sse-msg (a/<! events-chan)]
@@ -93,6 +102,7 @@
           (a/>! output-ch (event-stream-msg sse-msg)))
         (recur)))
     {::events-chan events-chan
+     ::sessions sessions
      :handler
      (fn register-client [req]
        (let [query-params (decode-session-query-params (:query-params req))
@@ -101,18 +111,33 @@
                              :sse/session-id (:session-id query-params)})
              output-ch (a/chan 100)
              cleanup (fn []
+                       (clojure.tools.logging/debug "Cleanup started" session-path)
+                       ;; Call custom cleanup functions if any
+                       (doseq [[cleanup-key cleanup-fn]
+                               (get-in @sessions [::cleanup-handlers session-path])]
+                         (log/debug "Cleaning up session" session-path cleanup-key)
+                         (cleanup-fn))
+
+                       ;; Close the channel
                        (a/close! output-ch)
+
+                       ;; Remove sessions from sessions store
                        (swap! sessions update-in session-path
                          (fn [output-channels]
-                           (remove #(= % output-ch) output-channels))))]
+                           (remove #(= % output-ch) output-channels)))
+
+                       ;; Remove registered cleanup handlers
+                       (swap! sessions u/dissoc-in [::cleanup-handlers session-path]))]
          (swap! sessions update-in session-path conj output-ch)
          (response/event-stream-response output-ch {:cleanup cleanup})))}))
 
 (defmethod ig/init-key ::sse-listener
   [_ _config]
-  (let [{::keys [events-chan] :keys [handler]} (start-listener!)]
+  (let [{::keys [events-chan sessions] :keys [handler]} (start-listener!)]
     {::events-chan events-chan
-     :middleware [[request/wrap-assoc ::events-chan events-chan]]
+     ::sessions sessions
+     :middleware [[request/wrap-merge {::events-chan events-chan
+                                       ::sessions sessions}]]
      :routes [["/sse"
                {:name :route/sse
                 :public? true
@@ -123,4 +148,5 @@
   (a/close! (::events-chan config)))
 
 (defn send! [req sse-event]
+  (log/debug "Sending SSE event" sse-event)
   (a/>!! (::events-chan req) sse-event))
