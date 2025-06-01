@@ -1,5 +1,6 @@
 (ns kit.kit-test.web.ui.delayed-render-sse
   (:require
+    [clojure.core.async :as a]
     [hiccup2.core :as h]
     [kit.kit-test.web.async-render :as async-render]
     [kit.kit-test.web.sse :as sse]
@@ -17,6 +18,10 @@
   (for [i (map inc (range 10))]
     {:comment (str "Comment " i)}))
 
+(defn- get-events []
+  (for [i (map inc (range 30))]
+    {:name (str "Event " i)}))
+
 (defn- section [title & children]
   (into
     [:div.mt-4.space-y-4
@@ -30,7 +35,7 @@
         (section "Users"
           (async-render/suspense req
             {:sse-session sse-session
-             :key "delayed-users"
+             :key "users"
              :placeholder [:p "Loading Users..."]}
             (future
               (Thread/sleep 5000)
@@ -42,13 +47,29 @@
         (section "Comments"
           (async-render/suspense req
             {:sse-session sse-session
-             :key "delayed-comments"
+             :key "comments"
              :placeholder [:p "Loading Comments..."]}
             (future
               (Thread/sleep 2000)
               [:div.animate-fade-in
                (for [c (get-comments)]
-                 [:p (:comment c)])])))))))
+                 [:p (:comment c)])])))
+
+        (section "Streamed events"
+          (async-render/stream req
+            {:sse-session sse-session
+             :key "streamed-events"
+             :hx-swap "beforeend"}
+            (fn [hiccup-ch done-fn]
+              (a/go-loop [[cur & others] (get-events)]
+                (a/<! (a/timeout 500))
+                (if cur
+                  (do
+                    (a/>! hiccup-ch [:p (:name cur)])
+                    (recur others))
+                  (do
+                    (a/>! hiccup-ch [:p "No more events..."])
+                    (done-fn)))))))))))
 
 (comment
   (defn replace-body [msg]
@@ -60,8 +81,6 @@
        :sse/session-id #uuid "e73961a4-1cb1-4001-a464-c4dff32df1a5"}))
   (replace-body "Hello!")
   (replace-body "Replace async")
-
-  (require '[clojure.core.async :as a])
 
   (def stop-ch (a/chan))
 

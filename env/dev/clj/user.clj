@@ -13,7 +13,6 @@
     [kit.api :as kit]
     [kit.kit-test.config :as config]
     [kit.kit-test.core]
-    [kit.kit-test.web.sse :as sse]
     [lambdaisland.classpath.watch-deps :as watch-deps]
     [portal.api :as portal]
     [xtdb.api :as xt]))
