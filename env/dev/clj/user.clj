@@ -59,15 +59,12 @@
 
 (comment
   (watch-deps/start! {:aliases [:dev :test]})
+  (start-portal!)
   (ir/go)
   (ir/reset)
   (ir/halt)
   (repl/refresh-all)
   (keys system)
-  (sse/send! (sse-listener)
-    {:sse/event "message"
-     :sse/data nil
-     :sse/topic "delayed-message-test"})
 
   (xt/entity-history (db)
     :person
@@ -85,9 +82,9 @@
   (kit/install-module :kit/xtdb))
 
 (require
+  '[clojure.tools.logging :as log]
   '[puget.color.ansi :as color]
-  '[puget.printer :as puget]
-  '[clojure.tools.logging :as log])
+  '[puget.printer :as puget])
 
 (set! *warn-on-reflection* true)
 

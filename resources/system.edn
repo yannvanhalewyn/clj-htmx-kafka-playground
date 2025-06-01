@@ -1,9 +1,4 @@
-{:system/env
- #profile {:dev :dev
-           :test :test
-           :prod :prod}
-
- :server/http
+{:server/http
  {:port #long #or [#env PORT 3000]
   :host #or [#env HTTP_HOST "0.0.0.0"]
   :handler #ig/ref :kit.kit-test.web.handler/ring-handler}
