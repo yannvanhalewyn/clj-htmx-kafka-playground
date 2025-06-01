@@ -1,27 +1,22 @@
 (ns my-app.web.htmx
   (:require
-    [hiccup.page :as p]))
+    [hiccup.page :as hp]))
 
 (defn hx-request? [req]
   (some-> (:headers req) (contains? "hx-request")))
 
 (defn page [{:keys [title]} & body]
-  (p/html5 {:lang "en"}
+  (hp/html5 {:lang "en"}
     [:head
      [:meta {:charset "UTF-8"}]
      [:title title]
-     (p/include-css "/styles.css")
+     (hp/include-css "/styles.css")
 
-     [:script
-      {:src "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
-       :type "text/javascript",
-       :defer true
-       :crossorigin "anonymous"}]
-     [:script
-      {:src "https://unpkg.com/htmx-ext-sse@2.2.3"
-       :type "text/javascript",
-       :defer true
-       :crossorigin "anonymous"}]]
+     (hp/include-js
+       "https://unpkg.com/hyperscript.org@0.9.12"
+       "https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
+       "https://unpkg.com/htmx-ext-sse@2.2.3")]
+
     [:body.bg-firefly
      body]))
 

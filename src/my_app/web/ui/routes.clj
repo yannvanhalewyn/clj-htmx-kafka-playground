@@ -4,6 +4,7 @@
     [my-app.tools.ui :as ui]
     [my-app.web.middleware.exception :as exception]
     [my-app.web.middleware.formats :as formats]
+    [my-app.web.ui.chat :as chat]
     [my-app.web.ui.delayed-render-sse :as delayed-render-sse]
     [my-app.web.ui.hx-playground :as hx-playground]
     [my-app.web.ui.layout :as layout]
@@ -23,6 +24,7 @@
       person-history/person-history
       hx-playground/hx-playground
       delayed-render-sse/delayed-render
+      chat/chat
       (layout/if-page-load req
         [:div.mt-4.space-y-3
          [:div
@@ -30,7 +32,9 @@
          [:div
           (ui/link "hx-playground" "HTMX Playground")]
          [:div
-          (ui/link "delayed-render" "Delayed Render")]]))))
+          (ui/link "delayed-render" "Delayed Render")]
+         [:div
+          (ui/link "chat" "Chat")]]))))
 
 (comment
   (ui-routes ""))

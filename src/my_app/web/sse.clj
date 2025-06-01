@@ -101,21 +101,29 @@
   (swap! (::sessions req) u/dissoc-in
     [::cleanup-handlers (session-path sse-session) cleanup-key]))
 
+(comment
+ (do
+   @(::sessions (user/sse-listener))))
+
 (defn- start-listener! []
   (let [events-chan (a/chan 10000)
         sessions (atom {})]
     (async/pipe-with! events-chan
       (fn [sse-msg]
-        (doseq [output-ch (get-in @sessions (session-path sse-msg))]
-          (a/put! output-ch (event-stream-msg sse-msg)))))
+        (clojure.tools.logging/debug "Received SSE message" sse-msg)
+        (let [event-msg (event-stream-msg sse-msg)]
+          (doseq [output-ch (get-in @sessions (session-path sse-msg))]
+            (clojure.tools.logging/debug "Sending SSE message to " output-ch)
+            (a/put! output-ch event-msg)))))
     {::events-chan events-chan
      ::sessions sessions
      :handler
      (fn register-client [req]
        (let [query-params (decode-session-query-params (:query-params req))
              session-path (session-path
-                            {:sse/topic (:topic query-params)
-                             :sse/session-id (:session-id query-params)})
+                            (u/prune
+                              {:sse/topic (:topic query-params)
+                               :sse/session-id (:session-id query-params)}))
              output-ch (a/chan 100)
              cleanup (fn []
                        ;; Call custom cleanup functions if any
