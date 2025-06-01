@@ -1,9 +1,9 @@
 (ns build
-  (:require [clojure.string :as string]
-            [clojure.tools.build.api :as b]))
+  (:require
+    [clojure.tools.build.api :as b]))
 
-(def lib 'kit/kit-test)
-(def main-cls (string/join "." (filter some? [(namespace lib) (name lib) "core"])))
+(def lib 'yannvanhalewyn/htmx-async-rendering)
+(def main-cls "my-app.core")
 (def version (format "0.0.1-SNAPSHOT"))
 (def target-dir "target")
 (def class-dir (str target-dir "/" "classes"))
@@ -22,14 +22,14 @@
                 :lib lib
                 :version version
                 :basis basis
-                :src-dirs ["src/clj"]})
-  (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
+                :src-dirs ["src"]})
+  (b/copy-dir {:src-dirs ["src" "resources" "env/prod"]
                :target-dir class-dir}))
 
 (defn uber [_]
   (println "Compiling Clojure...")
   (b/compile-clj {:basis basis
-                  :src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
+                  :src-dirs ["src" "resources" "env/prod"]
                   :class-dir class-dir})
   (println "Making uberjar...")
   (b/uber {:class-dir class-dir

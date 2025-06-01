@@ -1,4 +1,4 @@
-{:paths ["src" "test" "env/dev" "env/prod" "env/test"]
+{:paths ["src" "test" "env/dev" "env/prod" "build"]
  :indents {#re ".*" [[:inner 0]]}
  :extra-indents {or     [[:block 0]]
                  and    [[:block 0]]

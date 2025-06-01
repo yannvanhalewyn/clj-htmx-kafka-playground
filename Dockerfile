@@ -11,8 +11,8 @@ FROM azul/zulu-openjdk-alpine:17
 # Install libstdc++, needed for RocksDB on Alpine
 RUN apk add --no-cache libstdc++
 
-COPY --from=build /target/kit-test-standalone.jar /kit-test/kit-test-standalone.jar
+COPY --from=build /target/htmx-async-rendering-standalone.jar /my-app/htmx-async-rendering-standalone.jar
 
 EXPOSE $PORT
 
-ENTRYPOINT exec java $JAVA_OPTS -jar /kit-test/kit-test-standalone.jar
+ENTRYPOINT exec java $JAVA_OPTS -jar /my-app/htmx-async-rendering-standalone.jar

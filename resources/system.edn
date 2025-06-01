@@ -1,12 +1,12 @@
 {:server/http
  {:port #long #or [#env PORT 3000]
   :host #or [#env HTTP_HOST "0.0.0.0"]
-  :handler #ig/ref :kit.kit-test.web.handler/ring-handler}
+  :handler #ig/ref :my-app.web.handler/ring-handler}
 
- :kit.kit-test.web.handler/ring-handler
- {:router #ig/ref :kit.kit-test.web.handler/ring-router
+ :my-app.web.handler/ring-handler
+ {:router #ig/ref :my-app.web.handler/ring-router
   :api-path "/api"
-  :db-node #ig/ref :kit.kit-test.db/db-node
+  :db-node #ig/ref :my-app.db/db-node
   :cookie-secret #or [#env COOKIE_SECRET "NBYXWYYRNALTJSYF"]
   ;; from ring.middleware.defaults. anti-forgery `false` by default because services may not require it
   :site-defaults-config {:params {:urlencoded true
@@ -15,7 +15,7 @@
                                   :keywordize true}
                          :cookies true
                          :session {:flash true
-                                   :cookie-name "kit.kit-test"
+                                   :cookie-name "my-app"
                                    :cookie-attrs {:max-age 86400
                                                   :http-only true
                                                   :same-site :strict}}
@@ -30,22 +30,22 @@
                                      :content-types true
                                      :default-charset "utf-8"}}}
 
- :kit.kit-test.web.handler/ring-router
- {:routes [#ig/ref :kit.kit-test.web.api.routes/routes
-           #ig/ref :kit.kit-test.web.ui.routes/routes]
-  :plugins [#ig/ref :kit.kit-test.web.sse/sse-listener]}
+ :my-app.web.handler/ring-router
+ {:routes [#ig/ref :my-app.web.api.routes/routes
+           #ig/ref :my-app.web.ui.routes/routes]
+  :plugins [#ig/ref :my-app.web.sse/sse-listener]}
 
- :kit.kit-test.web.sse/sse-listener
+ :my-app.web.sse/sse-listener
  {}
 
  ;; Route handlers
- :kit.kit-test.web.api.routes/routes
+ :my-app.web.api.routes/routes
  {:base-path "/api"}
 
- :kit.kit-test.web.ui.routes/routes
+ :my-app.web.ui.routes/routes
  {}
 
- :kit.kit-test.db/db-node
+ :my-app.db/db-node
  {:tx-log "data/dev/tx-log"
   :document-store "data/dev/doc-store"
   :index-store "data/dev/index-store"}}

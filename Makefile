@@ -17,7 +17,7 @@ uberjar:
 	clj -T:build all
 
 docker:
-	docker build -t kit-test .
+	docker build -t clj-htmx-async-rendering .
 
 docker-run:
-	docker run -p 3000:3000 kit-test
+	docker run -p 3000:3000 clj-htmx-async-rendering
