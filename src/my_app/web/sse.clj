@@ -80,17 +80,24 @@
   [sse-session]
   [(:sse/topic sse-session) (:sse/session-id sse-session :others)])
 
-(defn- event-stream-msg [{:keys [sse/event sse/data]}]
+(defn- event-stream-msg
+  "A text formatted SSE message with event and data."
+  [{:keys [sse/event sse/data]}]
   (str "event:" event response/EOL
        "data:" data response/EOL
        response/EOL))
 
-(defn register-cleanup! [req sse-session cleanup-key f]
+(defn register-cleanup!
+  "Register a cleanup function to be ran when the client for the provided
+  sse-session disconnects"
+  [req sse-session cleanup-key f]
   (swap! (::sessions req) assoc-in
     [::cleanup-handlers (session-path sse-session) cleanup-key]
     f))
 
-(defn unregister-cleanup! [req sse-session cleanup-key]
+(defn unregister-cleanup!
+  "Removes the cleanup function for the given sse-session"
+  [req sse-session cleanup-key]
   (swap! (::sessions req) u/dissoc-in
     [::cleanup-handlers (session-path sse-session) cleanup-key]))
 
@@ -111,7 +118,6 @@
                              :sse/session-id (:session-id query-params)})
              output-ch (a/chan 100)
              cleanup (fn []
-
                        ;; Call custom cleanup functions if any
                        (doseq [[_cleanup-key cleanup-fn]
                                (get-in @sessions [::cleanup-handlers session-path])]
@@ -125,7 +131,7 @@
                          (fn [output-channels]
                            (remove #(= % output-ch) output-channels)))
 
-                       ;; Remove registered cleanup handlers
+                       ;; Remove remaining registered cleanup handlers
                        (swap! sessions u/dissoc-in [::cleanup-handlers session-path]))]
          (swap! sessions update-in session-path conj output-ch)
          (response/event-stream-response output-ch {:cleanup cleanup})))}))

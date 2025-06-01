@@ -49,10 +49,9 @@
 
     ;; Send received hiccup via SSE
     (async/pipe-with! hiccup-ch
-      (fn [hiccup]
-        (sse/send! req
-          (sse/new-message sse-session key
-            (str (h/html hiccup))))))
+      #(sse/send! req
+         (sse/new-message sse-session key
+           (str (h/html %)))))
 
     ;; Return an HTMX component
     [:div (assoc (select-keys params [:hx-swap])
