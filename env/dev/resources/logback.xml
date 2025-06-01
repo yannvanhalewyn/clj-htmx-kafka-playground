@@ -1,38 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="10 seconds">
-    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <!-- encoders are assigned the type
-             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>%date{ISO8601} [%thread] %-5level %logger{36} - %msg %n</pattern>
-        </encoder>
-    </appender>
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/kit.kit-test.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/kit.kit-test.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <!-- keep 30 days of history -->
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>%date{ISO8601} [%thread] %-5level %logger{36} - %msg %n</pattern>
-        </encoder>
-    </appender>
-    <logger name="org.eclipse.aether" level="warn" />
-    <logger name="io.methvin.watcher" level="warn" />
-    <logger name="org.eclipse.jgit" level="warn" />
-    <logger name="com.zaxxer.hikari" level="warn" />
-    <logger name="org.apache.http" level="warn" />
-    <logger name="org.xnio.nio" level="warn" />
-    <logger name="io.undertow" level="warn" />
-    <root level="DEBUG">
-        <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE" />
-    </root>
+<configuration scan="true" scanPeriod="5 seconds">
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%cyan(%-5level) %yellow(%-24logger{24}) %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%red(%-5level) %yellow(%-24logger{24}) %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="DEV_LOG_FILE" class="ch.qos.logback.core.FileAppender">
+    <file>target/logs/development.log</file>
+    <append>true</append>
+    <!-- higher logging throughput -->
+    <immediateFlush>true</immediateFlush>
+    <encoder>
+      <pattern>%-5level %yellow(%-24logger{24}) %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <variable name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}" />
+
+  <root level="${ROOT_LOG_LEVEL}">
+    <appender-ref ref="STDERR" />
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="DEV_LOG_FILE" />
+  </root>
+
+  <logger name="org.apache.kafka.clients.admin.AdminClientConfig" level="ERROR" />
+  <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="ERROR" />
+  <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="ERROR" />
+  <!-- Suppress warning about the Netty dependencies -->
+  <logger name="com.azure.core.http.netty.implementation.Utility" level="ERROR" />
+  <!-- Always debug XTDB transactions -->
+  <logger name="xtdb.tx" level="DEBUG"/>
+
+  <!-- Adjust noise when root level is DEBUG -->
+  <logger name="io.netty" level="INFO"/>
+  <logger name="org.apache.http" level="INFO"/>
+  <logger name="org.apache.kafka" level="INFO"/>
+  <logger name="org.eclipse.jetty" level="INFO"/>
+  <logger name="reactor.netty" level="INFO"/>
+  <logger name="xtdb.mem-kv" level="INFO"/>
+  <logger name="xtdb.memory" level="INFO"/>
+
+  <logger name="xtdb.query" level="INFO"/>
+
+  <!-- Suppress errors logged in Thymeleaf template engine -->
+  <logger name="org.thymeleaf.TemplateEngine" level="OFF"/>
+
 </configuration>
