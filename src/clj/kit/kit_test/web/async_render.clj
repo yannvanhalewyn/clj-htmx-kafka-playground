@@ -3,6 +3,7 @@
     [clojure.core.async :as a]
     [clojure.tools.logging :as log]
     [hiccup2.core :as h]
+    [kit.kit-test.tools.async :as async]
     [kit.kit-test.web.sse :as sse])
   (:import
     [java.util.concurrent CancellationException]))
@@ -14,13 +15,16 @@
         (sse/send! req
           (sse/new-message sse-session key html)))
       (sse/unregister-cleanup! req sse-session [::suspense key])
+
       ;; Cancellation exceptions are expected
       (catch CancellationException _e)
       (catch Exception e
         (log/error e "Error in delayed render"))))
+
   (sse/register-cleanup! req sse-session
     [::suspense key]
     #(future-cancel delayed-content))
+
   [:div {:sse-swap key}
    placeholder])
 
@@ -44,12 +48,11 @@
     (chime-fn hiccup-ch done-fn)
 
     ;; Send received hiccup via SSE
-    (a/go-loop []
-      (when-let [hiccup (a/<! hiccup-ch)]
+    (async/pipe-with! hiccup-ch
+      (fn [hiccup]
         (sse/send! req
           (sse/new-message sse-session key
-            (str (h/html hiccup))))
-        (recur)))
+            (str (h/html hiccup))))))
 
     ;; Return an HTMX component
     [:div (assoc (select-keys params [:hx-swap])

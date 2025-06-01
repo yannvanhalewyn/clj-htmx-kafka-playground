@@ -1,14 +1,15 @@
 (ns kit.kit-test.web.sse
   (:require
-    [clojure.core.async :as a]
-    [clojure.tools.logging :as log]
-    [integrant.core :as ig]
-    [kit.kit-test.tools.request :as request]
-    [kit.kit-test.tools.response :as response]
-    [kit.kit-test.tools.utils :as u]
-    [malli.core :as m]
-    [malli.transform :as mt]
-    [ring.util.codec :as ring.codec]))
+   [clojure.core.async :as a]
+   [clojure.tools.logging :as log]
+   [integrant.core :as ig]
+   [kit.kit-test.tools.async :as async]
+   [kit.kit-test.tools.request :as request]
+   [kit.kit-test.tools.response :as response]
+   [kit.kit-test.tools.utils :as u]
+   [malli.core :as m]
+   [malli.transform :as mt]
+   [ring.util.codec :as ring.codec]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SSE Message model
@@ -96,11 +97,10 @@
 (defn- start-listener! []
   (let [events-chan (a/chan 10000)
         sessions (atom {})]
-    (a/go-loop []
-      (when-let [sse-msg (a/<! events-chan)]
+    (async/pipe-with! events-chan
+      (fn [sse-msg]
         (doseq [output-ch (get-in @sessions (session-path sse-msg))]
-          (a/>! output-ch (event-stream-msg sse-msg)))
-        (recur)))
+          (a/put! output-ch (event-stream-msg sse-msg)))))
     {::events-chan events-chan
      ::sessions sessions
      :handler
