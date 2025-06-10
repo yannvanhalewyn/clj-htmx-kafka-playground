@@ -6,7 +6,8 @@
     [jackdaw.client :as jc]
     [jackdaw.serdes.edn :as jedn]
     [malli.core :as m]
-    [malli.error :as me])
+    [malli.error :as me]
+    [my-app.tools.date :as date])
   (:import
     [java.time Duration Instant]
     [org.apache.kafka.clients.consumer ConsumerRecord]
@@ -29,7 +30,7 @@
       (log/debug "Producing flight duration record")
       (try
         (jc/produce! (:producer producer) (:topic producer) (.key record)
-        ;; TODO calculate duration, can't do it without joining stream...
+          ;; TODO calculate duration, can't do it without joining stream...
           {:duration 10})
         (swap! processed-count inc)
         (catch Exception e
@@ -38,6 +39,28 @@
     {:processed @processed-count
      :errors @error-count
      :total (.count records)}))
+
+(defmethod process-batch! :my-app.events/warn-delayed-flights
+  [_ records]
+  (log/debug "Processing delayed flight warnings: " (.count records))
+  (doseq [^ConsumerRecord record records]
+    (let [payload (.value record)]
+      (case (:event-type payload)
+        :flight-departed
+        (when (> (inst-ms (:time payload))
+                (inst-ms (:scheduled-departure payload)))
+          (log/warnf "Delayed flight: [%s] departed at %s while scheduled at %s"
+            (:flight payload)
+            (date/format-date (:time payload))
+            (date/format-date (:scheduled-departure payload))))
+        :flight-arrived
+        (when (> (inst-ms (:time payload))
+                (inst-ms (:scheduled-arrival payload)))
+          (log/warnf "Delayed flight: [%s] arrived at %s while scheduled at %s"
+            (:flight payload)
+            (date/format-date (:time payload))
+            (date/format-date (:scheduled-arrival payload))))
+        (log/debug "Different event type" payload)))))
 
 (defmethod ig/init-key :my-app.kafka/config
   [_ config]
@@ -77,10 +100,14 @@
       :consumer consumer
       :running? running?)))
 
-(defn- assoc-producer [component kafka-config topic]
-  (assoc component :producer
-    {:producer (jc/producer kafka-config topic)
-     :topic topic}))
+(defn- assoc-producer [component kafka-config topics]
+  (let [topic (and (:producer component)
+                   (get topics (:producer component)))]
+    (cond-> component
+      topic
+      (assoc :producer
+        {:producer (jc/producer kafka-config topic)
+         :topic topic}))))
 
 (defn- topic-config [config]
   (assoc config
@@ -97,24 +124,21 @@
        (for [component components]
          (case (:type component)
            :producer
-          ;; I think these need to be closed? So maybe need to be integrant
-          ;; components
-           (assoc-producer component kafka-config
-             (get topics (:producer component)))
+           ;; I think these need to be closed? So maybe need to be integrant
+           ;; components
+           (assoc-producer component kafka-config topics)
            :consumer
            (-> component
-             (assoc-producer kafka-config
-               (get topics (:producer component)))
+             (assoc-producer kafka-config topics)
              (start-etl-consumer!
                {:kafka-config kafka-config
                 :topics topics})))))}))
 
 (defmethod ig/halt-key! :my-app/etl-topology
   [_ topology]
-  (sc.api/spy :halt-topology)
   (doseq [component (:components topology)]
     (when (:producer component)
-      (log/debug "Closing producer"))
+      (log/debug "Closing producer" (get-in component [:producer :topic :topic-name])))
     (some-> (:producer component) :producer (.close))
     (when (:consumer component)
       (log/debug "Waking consumer"))
@@ -169,16 +193,23 @@
       (first)
       :producer))
 
+  (def producer
+    (let [topic (topic-config {:topic-name "dev-etl-flight-events"})]
+      {:topic topic
+       :producer
+       (jc/producer {"bootstrap.servers" "localhost:29092"}
+         (topic-config {:topic-name "dev-etl-flight-events"}))}))
+
   (jc/produce! (:producer producer) (:topic producer)
     {:flight "UA102"}
     {:flight "UA102"
      :event-type :flight-departed
-     :time #inst "2025-06-10T09:25:40.000-00:00"
+     :time #inst "2025-06-10T12:25:40.000-00:00"
      :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"})
 
   (jc/produce! (:producer producer) (:topic producer)
     {:flight "UA102"}
     {:flight "UA102"
      :event-type :flight-arrived
-     :time #inst "2025-06-10T11:25:40.000-00:00"
+     :time #inst "2025-06-10T12:25:40.000-00:00"
      :scheduled-arrival #inst "2025-06-10T11:25:40.000-00:00"}))

@@ -65,21 +65,26 @@
 
  :my-app/etl-topology
  {:kafka-config #ref [:my-app.kafka/config]
-  :topics {:flight-events
+  :topics {:topic/flight-events
            {:topic-name "dev-etl-flight-events"
             :partition-count 1
             :replication-factor 1
             :topic-config {"retention.ms" "31536000000"}}
-           :flight-durations
+           :topic/flight-durations
            {:topic-name "dev-etl-flight-durations"
             :partition-count 1
             :replication-factor 1
             :topic-config {"retention.ms" "31536000000"}}}
   :components [{:type :producer
-                :producer :flight-events}
+                :producer :topic/flight-events}
                {:type :consumer
                 :handler :my-app.events/calculate-flight-durations
-                :consumer {:subscriptions [:flight-events]
+                :consumer {:subscriptions [:topic/flight-events]
                            :poll-duration 500
                            :group-id "flight-durations-calculator"}
-                :producer :flight-durations}]}}
+                :producer :topic/flight-durations}
+               {:type :consumer
+                :handler :my-app.events/warn-delayed-flights
+                :consumer {:subscriptions [:topic/flight-events]
+                           :poll-duration 500
+                           :group-id "warn-delayed-flights"}}]}}

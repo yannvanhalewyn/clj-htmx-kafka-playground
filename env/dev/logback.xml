@@ -2,6 +2,9 @@
 <configuration scan="true" scanPeriod="5 seconds">
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+    </filter>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <pattern>%cyan(%-5level) %yellow(%-24logger{24}) %msg%n</pattern>
     </encoder>
@@ -30,7 +33,6 @@
   <variable name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}" />
 
   <root level="${ROOT_LOG_LEVEL}">
-    <appender-ref ref="STDERR" />
     <appender-ref ref="STDOUT" />
     <appender-ref ref="DEV_LOG_FILE" />
   </root>
@@ -51,6 +53,10 @@
   <logger name="reactor.netty" level="INFO"/>
   <logger name="xtdb.mem-kv" level="INFO"/>
   <logger name="xtdb.memory" level="INFO"/>
+  <logger name="org.apache.kafka.clients.consumer.internals" level="ERROR"/>
+  <logger name="org.apache.kafka.clients.Metadata" level="ERROR"/>
+  <logger name="org.apache.kafka.common.metrics" level="ERROR"/>
+  <logger name="org.apache.kafka.common.utils" level="ERROR"/>
 
   <logger name="xtdb.query" level="INFO"/>
 
