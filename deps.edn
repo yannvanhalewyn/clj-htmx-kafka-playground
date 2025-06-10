@@ -1,4 +1,6 @@
 {:paths   ["src" "resources"]
+ ;; Needed for jackdaw dependencies
+ :mvn/repos {"confluent" {:url "https://packages.confluent.io/maven/"}}
  :deps    {org.clojure/clojure             {:mvn/version "1.12.0"}
 
            ;; Utils / Logging
@@ -26,6 +28,11 @@
            ;; DB
            com.xtdb/xtdb-core              {:mvn/version "1.24.5"}
            com.xtdb/xtdb-rocksdb           {:mvn/version "1.24.5"}
+
+           ;; Kafka
+           fundingcircle/jackdaw {:mvn/version "0.9.12"}
+           ;; Missing dependency for jackdaw: https://github.com/FundingCircle/jackdaw/issues/378
+           org.apache.kafka/kafka-streams-test-utils {:mvn/version "3.3.2"}
 
            ;; UI
            io.simpleui/simpleui            {:mvn/version "1.6.0"}}

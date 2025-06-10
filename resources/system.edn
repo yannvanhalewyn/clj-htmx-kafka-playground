@@ -48,4 +48,38 @@
  :my-app.db/db-node
  {:tx-log "data/dev/tx-log"
   :document-store "data/dev/doc-store"
-  :index-store "data/dev/index-store"}}
+  :index-store "data/dev/index-store"}
+
+ ;; One producer to input topic
+ ;; One consumer from input topic that produces to flight-duration topic
+ :my-app.kafka/config
+ {"bootstrap.servers" "localhost:29092"
+  "key.deserializer" "org.apache.kafka.common.serialization.StringDeserializer"
+  "value.deserializer" "jackdaw.serdes.EdnDeserializer"
+  "group.id" "archive-etl-processor"
+  "auto.offset.reset" "earliest"
+  "enable.auto.commit" "false"
+  "max.poll.records" "100"
+  "session.timeout.ms" "30000"
+  "heartbeat.interval.ms" "10000"}
+
+ :my-app/etl-topology
+ {:kafka-config #ref [:my-app.kafka/config]
+  :topics {:flight-events
+           {:topic-name "dev-etl-flight-events"
+            :partition-count 1
+            :replication-factor 1
+            :topic-config {"retention.ms" "31536000000"}}
+           :flight-durations
+           {:topic-name "dev-etl-flight-durations"
+            :partition-count 1
+            :replication-factor 1
+            :topic-config {"retention.ms" "31536000000"}}}
+  :components [{:type :producer
+                :producer :flight-events}
+               {:type :consumer
+                :handler :my-app.events/calculate-flight-durations
+                :consumer {:subscriptions [:flight-events]
+                           :poll-duration 500
+                           :group-id "flight-durations-calculator"}
+                :producer :flight-durations}]}}
