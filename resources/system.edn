@@ -50,9 +50,7 @@
   :document-store "data/dev/doc-store"
   :index-store "data/dev/index-store"}
 
- ;; One producer to input topic
- ;; One consumer from input topic that produces to flight-duration topic
- :my-app.kafka/config
+ :my-app.events/kafka-config
  {"bootstrap.servers" "localhost:29092"
   "key.deserializer" "org.apache.kafka.common.serialization.StringDeserializer"
   "value.deserializer" "jackdaw.serdes.EdnDeserializer"
@@ -63,28 +61,23 @@
   "session.timeout.ms" "30000"
   "heartbeat.interval.ms" "10000"}
 
- :my-app/etl-topology
- {:kafka-config #ref [:my-app.kafka/config]
-  :topics {:topic/flight-events
-           {:topic-name "dev-etl-flight-events"
-            :partition-count 1
-            :replication-factor 1
-            :topic-config {"retention.ms" "31536000000"}}
-           :topic/flight-durations
-           {:topic-name "dev-etl-flight-durations"
-            :partition-count 1
-            :replication-factor 1
-            :topic-config {"retention.ms" "31536000000"}}}
-  :components [{:type :producer
-                :producer :topic/flight-events}
-               {:type :consumer
-                :handler :my-app.events/calculate-flight-durations
-                :consumer {:subscriptions [:topic/flight-events]
-                           :poll-duration 500
-                           :group-id "flight-durations-calculator"}
-                :producer :topic/flight-durations}
-               {:type :consumer
-                :handler :my-app.events/warn-delayed-flights
-                :consumer {:subscriptions [:topic/flight-events]
-                           :poll-duration 500
-                           :group-id "warn-delayed-flights"}}]}}
+ :my-app.events/flights-pipeline
+ {:kafka-config #ref [:my-app.events/kafka-config]
+  :topics
+  {:topic/flight-events
+   {:topic-name "dev-etl-flight-events"
+    :partition-count 1
+    :replication-factor 1
+    :topic-config {"retention.ms" "31536000000"}}
+   :topic/flight-durations
+   {:topic-name "dev-etl-flight-durations"
+    :partition-count 1
+    :replication-factor 1
+    :topic-config {"retention.ms" "31536000000"}}}
+  :consumer-configs
+  {:connector/flight-durations
+   {:poll-duration 500
+    :group-id "flight-durations-calculator"}
+   :sink/duration-warnings
+   {:poll-duration 500
+    :group-id "warn-delayed-flights"}}}}
