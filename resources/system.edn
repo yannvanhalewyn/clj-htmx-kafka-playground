@@ -84,4 +84,5 @@
     :group-id "warn-delayed-flights"}
    :sink/copy-to-xtdb
    {:poll-duration 500
+    :batch-size 1
     :group-id "copy-to-xtdb"}}}}

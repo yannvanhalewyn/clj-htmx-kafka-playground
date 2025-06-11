@@ -3,7 +3,8 @@
     [clojure.tools.logging :as log]
     [jackdaw.client :as jc]
     [jackdaw.serdes.edn :as jedn]
-    [malli.core :as m])
+    [malli.core :as m]
+    [my-app.tools.utils :as u])
   (:import
     [java.time Duration Instant]
     [org.apache.kafka.clients.consumer KafkaConsumer]
@@ -68,9 +69,11 @@
     ::consumer-configs consumer-configs))
 
 (defn- consumer-config [{::keys [kafka-config consumer-configs]} component-key]
-  (assoc (select-keys kafka-config ["bootstrap.servers"])
-    "group.id" (get-in consumer-configs [component-key :group-id])
-    "client.id" (str "consumer-" (subs (str component-key) 1))))
+  (let [config (get consumer-configs component-key)]
+    (u/assoc-some (select-keys kafka-config ["bootstrap.servers"])
+      "group.id" (:group-id config)
+      "client.id" (str "consumer-" (subs (str component-key) 1))
+      "max.poll.records" (some-> (:batch-size config) int))))
 
 (defn- producer-config [{::keys [kafka-config]} component-key]
   (merge kafka-config

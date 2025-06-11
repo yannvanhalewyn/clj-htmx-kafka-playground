@@ -16,3 +16,17 @@
   (if (= 1 (count path))
     (dissoc coll (first path))
     (update-in coll (butlast path) dissoc (last path))))
+
+(defn assoc-some
+  "assoc key/value pairs to the map only on non-nil values
+
+   (assoc-some {} :a 1)
+   => {:a 1}
+
+   (assoc-some {} :a 1 :b nil)
+   => {:a 1}"
+  ([m k v]
+   (if (some? v) (assoc m k v) m))
+  ([m k v & more]
+   (apply assoc-some (assoc-some m k v) more)))
+

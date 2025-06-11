@@ -122,15 +122,17 @@
   (def admin-client (ja/->AdminClient (::kafka-config config)))
 
   (ja/list-topics admin-client)
-  (ja/delete-topics! admin-client
-    [{:topic-name "ledger-entries-requested"}])
-  (tools.jackdaw/re-delete-topics (:my-app.kafka/config config)
+  (tools.jackdaw/re-delete-topics (::kafka-config config)
     #"^dev-etl.*")
 
   (count
    (xt/q (user/db)
      '{:find [(pull ?e [*])]
        :where [[?e :xt/id]]}))
+
+  (xt/q (user/db)
+   '{:find [(pull ?e [*])]
+     :where [[?e :flight "UA068"]]})
 
   (->>
      (xt/q (user/db)

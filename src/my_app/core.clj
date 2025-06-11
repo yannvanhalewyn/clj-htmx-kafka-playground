@@ -5,6 +5,7 @@
     [my-app.config :as config]
     [my-app.db]
     [my-app.env :refer [defaults]] ;
+    [my-app.events]
     [my-app.web.api.routes]
     [my-app.web.handler]
     [my-app.web.jetty]
