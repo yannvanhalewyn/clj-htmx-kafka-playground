@@ -57,6 +57,16 @@
 (defn sse-listener []
   (-> system :my-app.web.sse/sse-listener))
 
+(defn delete-all-entities! []
+  (let [entities (->> (xt/q (user/db)
+                       '{:find [?e]
+                         :where [[?e :xt/id]]})
+                  (map first))]
+   (xt/await-tx (user/db-node)
+    (xt/submit-tx (user/db-node)
+     (for [e entities]
+      [::xt/delete e])))))
+
 (comment
   (watch-deps/start! {:aliases [:dev :test]})
   (start-portal!)

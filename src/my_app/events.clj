@@ -7,15 +7,16 @@
     [malli.core :as m]
     [malli.error :as me]
     [my-app.tools.date :as date]
-    [my-app.tools.etl-topology :as etl-topology])
+    [my-app.tools.etl-topology :as etl-topology]
+    [xtdb.api :as xt])
   (:import
-    [org.apache.kafka.clients.consumer ConsumerRecord]))
+    [org.apache.kafka.clients.consumer ConsumerRecord OffsetAndMetadata]))
 
 (defmethod print-method java.time.Instant
   [inst ^java.io.Writer w]
   (.write w (str "#instant \"" (.toString inst) "\"")))
 
-(defn calculate-flight-durations
+(defn- calculate-flight-durations
   [{:keys [connector/producers]} records]
   (let [processed-count (atom 0)
         error-count (atom 0)
@@ -34,7 +35,7 @@
      :errors @error-count
      :total (.count records)}))
 
-(defn warn-delayed-flights
+(defn- warn-delayed-flights
   [_ records]
   (log/debug "[Delayed Flights] Processing delayed flight warnings: " (.count records))
   (doseq [^ConsumerRecord record records]
@@ -56,6 +57,20 @@
             (date/format-date (:scheduled-arrival payload))))
         (log/debug "[Delayed Flights] Different event type" payload)))))
 
+(defn copy-to-xtdb!
+  [{:keys [my-app.db/db-node sink/consumer]} records]
+  (log/debug "[Copy to XTDB] Processing copy to XTDB: " (.count records))
+  (doseq [^ConsumerRecord record records]
+    (try
+      (let [payload (.value record)]
+        (log/debug "[Copy to XTDB]  Processing flight " (:flight payload))
+        (xt/await-tx db-node
+          (xt/submit-tx db-node
+            [[::xt/put (assoc payload :xt/id (random-uuid))]])))
+      (catch Exception e
+        (log/error e "[Copy to XTDB] Failed to copy to XTDB:" (.key record))
+        (throw e)))))
+
 (defmethod ig/init-key ::kafka-config
   [_ config]
   config)
@@ -71,9 +86,12 @@
     (etl-topology/add-sink :sink/duration-warnings
       {:in [:topic/flight-events]}
       warn-delayed-flights)
+    (etl-topology/add-sink :sink/copy-to-xtdb
+      {:in [:topic/flight-events]}
+      copy-to-xtdb!)
     (etl-topology/start!)))
 
-(defmethod ig/halt-key! ::flights-pipeling
+(defmethod ig/halt-key! ::flights-pipeline
   [_ topology]
   (etl-topology/stop! topology))
 
@@ -109,16 +127,35 @@
   (tools.jackdaw/re-delete-topics (:my-app.kafka/config config)
     #"^dev-etl.*")
 
+  (count
+   (xt/q (user/db)
+     '{:find [(pull ?e [*])]
+       :where [[?e :xt/id]]}))
+
+  (->>
+     (xt/q (user/db)
+      '{:find [(pull ?e [*])]
+        :where [[?e :xt/id]]})
+     (map first)
+     (map :flight)
+     (frequencies)
+     (filter
+      (fn [[_k v]]
+        (> v 1)))
+     (sort-by first))
+  (user/delete-all-entities!)
+
   (def topology
     (::flights-pipeline integrant.repl.state/system))
 
-  (dotimes [n 1000]
-   (etl-topology/send! topology :source/flight-events
-     {:flight "UA102"}
-     {:flight "UA102"
-      :event-type :flight-departed
-      :time #inst "2025-06-10T12:25:40.000-00:00"
-      :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"}))
+  (dotimes [n 500]
+    (let [flightnr (str "UA" n)]
+     (etl-topology/send! topology :source/flight-events
+       {:flight flightnr}
+       {:flight flightnr
+        :event-type :flight-departed
+        :time #inst "2025-06-10T12:25:40.000-00:00"
+        :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"})))
 
   (etl-topology/send! topology :source/flight-events
     {:flight "UA102"}
@@ -134,9 +171,10 @@
        (jc/producer {"bootstrap.servers" "localhost:29092"} topic)}))
 
   (dotimes [n 100]
-    (jc/produce! (:producer producer) (:topic producer)
-      {:flight "UA102"}
-      {:flight "UA102"
-       :event-type :flight-departed
-       :time #inst "2025-06-10T12:25:40.000-00:00"
-       :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"})))
+    (let [flightnr (format "UA%03d" n)]
+     (jc/produce! (:producer producer) (:topic producer)
+       {:flight flightnr}
+       {:flight flightnr
+        :event-type :flight-departed
+        :time #inst "2025-06-10T12:25:40.000-00:00"
+        :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"}))))

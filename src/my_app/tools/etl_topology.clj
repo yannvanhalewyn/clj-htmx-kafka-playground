@@ -1,14 +1,14 @@
 (ns my-app.tools.etl-topology
   (:require
-   [clojure.tools.logging :as log]
-   [jackdaw.client :as jc]
-   [jackdaw.serdes.edn :as jedn]
-   [malli.core :as m])
+    [clojure.tools.logging :as log]
+    [jackdaw.client :as jc]
+    [jackdaw.serdes.edn :as jedn]
+    [malli.core :as m])
   (:import
-   [java.time Duration Instant]
-   [org.apache.kafka.clients.consumer KafkaConsumer]
-   [org.apache.kafka.clients.producer KafkaProducer]
-   [org.apache.kafka.common.errors WakeupException]))
+    [java.time Duration Instant]
+    [org.apache.kafka.clients.consumer KafkaConsumer]
+    [org.apache.kafka.clients.producer KafkaProducer]
+    [org.apache.kafka.common.errors WakeupException]))
 
 (defn- kafka-producer? [x]
   (instance? KafkaProducer x))
@@ -61,10 +61,11 @@
     :key-serde (edn-serde)
     :value-serde (edn-serde)))
 
-(defn new [{:keys [kafka-config topics consumer-configs]}]
-  {::topics (update-vals topics topic-config)
-   ::kafka-config kafka-config
-   ::consumer-configs consumer-configs})
+(defn new [{:keys [kafka-config topics consumer-configs] :as config}]
+  (assoc (dissoc config :kafka-config :topics :consumer-configs)
+    ::topics (update-vals topics topic-config)
+    ::kafka-config kafka-config
+    ::consumer-configs consumer-configs))
 
 (defn- consumer-config [{::keys [kafka-config consumer-configs]} component-key]
   (assoc (select-keys kafka-config ["bootstrap.servers"])
@@ -103,7 +104,7 @@
                       (map (::topics topology) in))
      :sink/handler handler}))
 
-(defn- start-polling! [component consumer handler]
+(defn- start-polling! [topology component consumer handler]
   (let [running? (atom true)
         poll-duration 500]
     (future
@@ -112,7 +113,9 @@
           (let [records (.poll consumer (Duration/ofMillis poll-duration))]
             (when (pos? (.count records))
               (log/info "Processing batch of" (.count records) "records")
-              (let [result (handler component records)]
+              ;; Ah the batch handler is not getting a commit
+              ;; Change batch size
+              (let [result (handler (merge topology component) records)]
                 (log/info "Batch processed:" result)
                 (.commitSync consumer)))))
 
@@ -134,10 +137,10 @@
   (-> topology
     (update ::connectors update-vals
       (fn [{:connector/keys [consumer handler] :as connector}]
-        (start-polling! connector consumer handler)))
+        (start-polling! topology connector consumer handler)))
     (update ::sinks update-vals
       (fn [{:sink/keys [consumer handler] :as sink}]
-        (start-polling! sink consumer handler)))))
+        (start-polling! topology sink consumer handler)))))
 
 (defn stop! [topology]
   (sc.api/spy :stop!)

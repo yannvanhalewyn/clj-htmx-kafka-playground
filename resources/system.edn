@@ -62,7 +62,8 @@
   "heartbeat.interval.ms" "10000"}
 
  :my-app.events/flights-pipeline
- {:kafka-config #ref [:my-app.events/kafka-config]
+ {:my-app.db/db-node #ig/ref :my-app.db/db-node
+  :kafka-config #ref [:my-app.events/kafka-config]
   :topics
   {:topic/flight-events
    {:topic-name "dev-etl-flight-events"
@@ -80,4 +81,7 @@
     :group-id "flight-durations-calculator"}
    :sink/duration-warnings
    {:poll-duration 500
-    :group-id "warn-delayed-flights"}}}}
+    :group-id "warn-delayed-flights"}
+   :sink/copy-to-xtdb
+   {:poll-duration 500
+    :group-id "copy-to-xtdb"}}}}
