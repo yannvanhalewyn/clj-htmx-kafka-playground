@@ -85,4 +85,28 @@
    :sink/copy-to-xtdb
    {:poll-duration 500
     :batch-size 100
-    :group-id "copy-to-xtdb"}}}}
+    :group-id "copy-to-xtdb"}}}
+
+ :my-app.archive/archiving-pipeline
+ {:my-app.db/db-node #ig/ref :my-app.db/db-node
+  :kafka-config #ref [:my-app.events/kafka-config]
+  :topics
+  {:topic/raw-payloads
+   {:topic-name "dev-etl-raw-payloads"
+    :partition-count 10
+    :replication-factor #profile {:dev 1 :prod 3}
+    :topic-config {"retention.ms" "-1"}}
+   :topic/processed-objects
+   {:topic-name "dev-etl-processed-objects"
+    :partition-count 1
+    :replication-factor #profile {:dev 1 :prod 3}
+    :topic-config {"retention.ms" "31536000000"}}}
+  :consumer-configs
+  {:connector/process-payloads
+   {:poll-duration 500
+    :batch-size 100
+    :group-id "extract-metadata"}
+   :sink/notify-user
+   {:poll-duration 500
+    :batch-size 100
+    :group-id "notify-user"}}}}

@@ -70,7 +70,8 @@
 (comment
   (watch-deps/start! {:aliases [:dev :test]})
   (start-portal!)
-  (ir/go)
+  (ir/go [:my-app.db/db-node])
+  (ir/go [:my-app.archive/archiving-pipeline])
   (ir/reset)
   (ir/halt)
   (repl/refresh-all)

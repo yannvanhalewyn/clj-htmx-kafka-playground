@@ -86,6 +86,7 @@
       {:source/producer (jc/producer (producer-config topology source-key) topic)
        :source/topic topic})))
 
+;; Consider renaming to add-processor
 (defn add-connector [topology connector-key {:keys [in out]} handler]
   (assoc-in topology [::connectors connector-key]
     {:connector/consumer (jc/subscribed-consumer
@@ -116,9 +117,9 @@
         (while @running?
           (let [records ^ConsumerRecords (.poll consumer (Duration/ofMillis (or (:poll-duration component) 1000)))]
             (when (pos? (.count records))
-              (log/info "Processing batch of" (.count records) "records")
+              ;;(log/info "Processing batch of" (.count records) "records")
               (let [result (handler (merge topology component) records)]
-                (log/info "Batch processed:" result)
+                ;;(log/info "Batch processed:" result)
                 (.commitSync consumer)))))
 
         (catch WakeupException _e

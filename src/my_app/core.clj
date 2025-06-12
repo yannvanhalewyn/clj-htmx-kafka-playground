@@ -2,6 +2,7 @@
   (:require
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
+    [my-app.archive]
     [my-app.config :as config]
     [my-app.db]
     [my-app.env :refer [defaults]] ;
