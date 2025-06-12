@@ -23,4 +23,4 @@
 
 (defmethod ig/halt-key! ::db-node
   [_ db-node]
-  (.close db-node))
+  (.close ^java.io.Closeable db-node))

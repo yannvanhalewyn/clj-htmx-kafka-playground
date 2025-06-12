@@ -11,16 +11,16 @@
     [my-app.tools.kafka :as kafka]
     [xtdb.api :as xt])
   (:import
-    [org.apache.kafka.clients.consumer ConsumerRecord]))
+    [org.apache.kafka.clients.consumer ConsumerRecord ConsumerRecords]))
 
 (set! *warn-on-reflection* true)
 
 (defmethod print-method java.time.Instant
-  [inst ^java.io.Writer w]
+  [^java.time.Instant inst ^java.io.Writer w]
   (.write w (str "#instant \"" (.toString inst) "\"")))
 
 (defn- calculate-flight-durations
-  [{:keys [connector/producers]} records]
+  [{:keys [connector/producers]} ^ConsumerRecords records]
   (let [processed-count (atom 0)
         error-count (atom 0)
         producer (get producers :topic/flight-durations)]
@@ -40,7 +40,7 @@
 
 (defn- warn-delayed-flights
   [_ records]
-  (log/debug "[Delayed Flights] Processing delayed flight warnings: " (.count records))
+  (log/debug "[Delayed Flights] Processing delayed flight warnings: " (.count ^ConsumerRecords records))
   (doseq [^ConsumerRecord record records]
     (let [payload (.value record)]
       (case (:event-type payload)
@@ -62,7 +62,7 @@
 
 (defn copy-to-xtdb!
   [{:keys [my-app.db/db-node sink/consumer]} records]
-  (log/debug "[Copy to XTDB] Processing copy to XTDB: " (.count records))
+  (log/debug "[Copy to XTDB] Processing copy to XTDB: " (.count ^ConsumerRecords records))
   (doseq [^ConsumerRecord record records]
     (try
       (let [payload (.value record)]
@@ -141,7 +141,7 @@
 
   (xt/q (user/db)
    '{:find [(pull ?e [*])]
-     :where [[?e :flight "UA043"]]})
+     :where [[?e :flight "UA178"]]})
 
   (->>
      (xt/q (user/db)
@@ -179,7 +179,7 @@
        :producer
        (jc/producer {"bootstrap.servers" "localhost:29092"} topic)}))
 
-  (dotimes [n 100]
+  (dotimes [n 400]
     (let [flightnr (format "UA%03d" n)]
      (jc/produce! (:producer producer) (:topic producer)
        {:flight flightnr}

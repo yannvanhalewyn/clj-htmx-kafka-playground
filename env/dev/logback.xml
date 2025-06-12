@@ -57,8 +57,8 @@
   <logger name="org.apache.kafka.clients.Metadata" level="ERROR"/>
   <logger name="org.apache.kafka.common.metrics" level="ERROR"/>
   <logger name="org.apache.kafka.common.utils" level="ERROR"/>
-
   <logger name="xtdb.query" level="INFO"/>
+  <logger name="xtdb.tx" level="INFO"/>
 
   <!-- Suppress errors logged in Thymeleaf template engine -->
   <logger name="org.thymeleaf.TemplateEngine" level="OFF"/>

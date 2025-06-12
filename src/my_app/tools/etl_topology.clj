@@ -7,7 +7,7 @@
     [my-app.tools.utils :as u])
   (:import
     [java.time Duration Instant]
-    [org.apache.kafka.clients.consumer KafkaConsumer]
+    [org.apache.kafka.clients.consumer KafkaConsumer ConsumerRecords]
     [org.apache.kafka.clients.producer KafkaProducer]
     [org.apache.kafka.common.errors WakeupException]))
 
@@ -108,12 +108,13 @@
      :sink/handler handler
      :poll-duration (get-in topology [::consumer-configs sink-key :poll-duration])}))
 
-(defn- start-polling! [topology component consumer handler]
+(defn- start-polling!
+  [topology component ^KafkaConsumer consumer handler]
   (let [running? (atom true)]
     (future
       (try
         (while @running?
-          (let [records (.poll consumer (Duration/ofMillis (or (:poll-duration component) 1000)))]
+          (let [records ^ConsumerRecords (.poll consumer (Duration/ofMillis (or (:poll-duration component) 1000)))]
             (when (pos? (.count records))
               (log/info "Processing batch of" (.count records) "records")
               (let [result (handler (merge topology component) records)]
@@ -145,19 +146,19 @@
   (doseq [source (vals (::sources topology))]
     (log/debug "Closing producer" (:source/producer source)
       (get-in source [:source/topic :topic-name]))
-    (.close (:source/producer source)))
+    (.close ^KafkaProducer (:source/producer source)))
 
   (doseq [{::keys [running?] :as connector} (vals (::connectors topology))]
     (log/debug "Waking consumer" (:connector/consumer connector))
-    (.wakeup (:connector/consumer connector))
+    (.wakeup ^KafkaConsumer (:connector/consumer connector))
     (doseq [producer (vals (:connector/producers connector))]
       (log/debug "Closing producer" (:producer producer) (get-in producer [:topic :topic-name]))
-      (.close (:producer producer)))
+      (.close ^KafkaProducer (:producer producer)))
     (reset! running? false))
 
   (doseq [{::keys [running?] :as sink} (vals (::sinks topology))]
     (log/debug "Waking consumer" (:sink/consumer sink))
-    (.wakeup (:sink/consumer sink))
+    (.wakeup ^KafkaConsumer (:sink/consumer sink))
     (reset! running? false)))
 
 (defn send!
