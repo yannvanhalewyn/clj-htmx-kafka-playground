@@ -19,15 +19,15 @@
   [^java.time.Instant inst ^java.io.Writer w]
   (.write w (str "#instant \"" (.toString inst) "\"")))
 
-(defn- calculate-flight-durations
-  [{:keys [connector/producers]} ^ConsumerRecords records]
+(defmethod etl-topology/process-batch! :processor/flight-durations
+  [_topology {::etl-topology/keys [producers]} ^ConsumerRecords records]
   (let [processed-count (atom 0)
         error-count (atom 0)
         producer (get producers :topic/flight-durations)]
     (doseq [^ConsumerRecord record records]
       (log/debug "[Durations] Producing flight duration record")
       (try
-        (jc/produce! (:producer producer) (:topic producer) (.key record)
+        (jc/produce! (::etl-topology/producer producer) (::etl-topology/topic producer) (.key record)
           ;; TODO calculate duration, can't do it without joining stream...
           {:duration 10})
         (swap! processed-count inc)
@@ -38,30 +38,30 @@
      :errors @error-count
      :total (.count records)}))
 
-(defn- warn-delayed-flights
-  [_ records]
-  (log/debug "[Delayed Flights] Processing delayed flight warnings: " (.count ^ConsumerRecords records))
+(defmethod etl-topology/process-batch! :sink/duration-warnings
+  [_topology _component records]
+  (log/debug "[Duration Warning] Processing delayed flight warnings: " (.count ^ConsumerRecords records))
   (doseq [^ConsumerRecord record records]
     (let [payload (.value record)]
       (case (:event-type payload)
         :flight-departed
         (when (> (inst-ms (:time payload))
                 (inst-ms (:scheduled-departure payload)))
-          (log/warnf "[Delayed Flights] Delayed flight: [%s] departed at %s while scheduled at %s"
+          (log/warnf "[Duration Warning] Delayed flight: [%s] departed at %s while scheduled at %s"
             (:flight payload)
             (date/format-date (:time payload))
             (date/format-date (:scheduled-departure payload))))
         :flight-arrived
         (when (> (inst-ms (:time payload))
                 (inst-ms (:scheduled-arrival payload)))
-          (log/warnf "[Delayed Flights] Delayed flight: [%s] arrived at %s while scheduled at %s"
+          (log/warnf "[Duration Warning] Delayed flight: [%s] arrived at %s while scheduled at %s"
             (:flight payload)
             (date/format-date (:time payload))
             (date/format-date (:scheduled-arrival payload))))
-        (log/debug "[Delayed Flights] Different event type" payload)))))
+        (log/debug "[Duration Warning] Different event type" payload)))))
 
-(defn copy-to-xtdb!
-  [{:keys [my-app.db/db-node sink/consumer]} records]
+(defmethod etl-topology/process-batch! :sink/copy-to-xtdb
+  [{:keys [my-app.db/db-node]} {::etl-topology/keys [consumer]} records]
   (log/debug "[Copy to XTDB] Processing copy to XTDB: " (.count ^ConsumerRecords records))
   (doseq [^ConsumerRecord record records]
     (try
@@ -80,19 +80,8 @@
 
 (defmethod ig/init-key ::flights-pipeline
   [_ config]
-  (-> (etl-topology/new config)
-    (etl-topology/add-source :source/flight-events :topic/flight-events)
-    (etl-topology/add-connector :connector/flight-durations
-      {:in [:topic/flight-events]
-       :out [:topic/flight-durations]}
-      calculate-flight-durations)
-    (etl-topology/add-sink :sink/duration-warnings
-      {:in [:topic/flight-events]}
-      warn-delayed-flights)
-    (etl-topology/add-sink :sink/copy-to-xtdb
-      {:in [:topic/flight-events]}
-      copy-to-xtdb!)
-    (etl-topology/start!)))
+  (etl-topology/start!
+    (etl-topology/new config)))
 
 (defmethod ig/halt-key! ::flights-pipeline
   [_ topology]
@@ -141,7 +130,7 @@
 
   (xt/q (user/db)
    '{:find [(pull ?e [*])]
-     :where [[?e :flight "UA178"]]})
+     :where [[?e :flight "UA314"]]})
 
   (->>
      (xt/q (user/db)

@@ -51,19 +51,12 @@
   :index-store "data/dev/index-store"}
 
  :my-app.events/kafka-config
- {"bootstrap.servers" "localhost:29092"
-  "key.deserializer" "org.apache.kafka.common.serialization.StringDeserializer"
-  "value.deserializer" "jackdaw.serdes.EdnDeserializer"
-  "group.id" "archive-etl-processor"
-  "auto.offset.reset" "earliest"
-  "enable.auto.commit" "false"
-  "max.poll.records" "100"
-  "session.timeout.ms" "30000"
-  "heartbeat.interval.ms" "10000"}
+ {"bootstrap.servers" "localhost:29092"}
 
  :my-app.events/flights-pipeline
  {:my-app.db/db-node #ig/ref :my-app.db/db-node
   :kafka-config #ref [:my-app.events/kafka-config]
+
   :topics
   {:topic/flight-events
    {:topic-name "dev-etl-flight-events"
@@ -75,21 +68,39 @@
     :partition-count 1
     :replication-factor 1
     :topic-config {"retention.ms" "31536000000"}}}
-  :consumer-configs
-  {:connector/flight-durations
-   {:poll-duration 500
-    :group-id "flight-durations-calculator"}
-   :sink/duration-warnings
-   {:poll-duration 500
-    :group-id "warn-delayed-flights"}
-   :sink/copy-to-xtdb
-   {:poll-duration 500
-    :batch-size 100
-    :group-id "copy-to-xtdb"}}}
+
+  :components
+  [{:type :source
+    :key :source/flight-events
+    :topic :topic/flight-events}
+
+   {:type :processor
+    :key :processor/flight-durations
+    :in [:topic/flight-events]
+    :out [:topic/flight-durations]
+    :consumer-config
+    {:poll-duration 500
+     :group-id "flight-durations-calculator"}}
+
+   {:type :sink
+    :key :sink/duration-warnings
+    :in [:topic/flight-events]
+    :consumer-config
+    {:poll-duration 500
+     :group-id "warn-delayed-flights"}}
+
+   {:type :sink
+    :key :sink/copy-to-xtdb
+    :in [:topic/flight-events]
+    :consumer-config
+    {:poll-duration 500
+     :batch-size 100
+     :group-id "copy-to-xtdb"}}]}
 
  :my-app.archive/archiving-pipeline
  {:my-app.db/db-node #ig/ref :my-app.db/db-node
   :kafka-config #ref [:my-app.events/kafka-config]
+
   :topics
   {:topic/raw-payloads
    {:topic-name "dev-etl-raw-payloads"
@@ -101,12 +112,26 @@
     :partition-count 1
     :replication-factor #profile {:dev 1 :prod 3}
     :topic-config {"retention.ms" "31536000000"}}}
-  :consumer-configs
-  {:connector/process-payloads
-   {:poll-duration 500
-    :batch-size 100
-    :group-id "extract-metadata"}
-   :sink/notify-user
-   {:poll-duration 500
-    :batch-size 100
-    :group-id "notify-user"}}}}
+
+  :components
+  [{:type :source
+    :key :my-app.archive/payload-ingester
+    :topic :topic/raw-payloads}
+
+   {:type :processor
+    :key :my-app.archive/process-payloads
+    :in [:topic/raw-payloads]
+    :out [:topic/processed-objects]
+    :consumer-config
+    {:poll-duration 500
+     :group-id "extract-metadata"
+     :batch-size 100
+     "auto.offset.reset" "earliest"}}
+
+   {:type :sink
+    :key :my-app.archive/notify-users
+    :in [:topic/processed-objects]
+    :consumer-config
+    {:poll-duration 500
+     :batch-size 100
+     :group-id "notify-user"}}]}}
