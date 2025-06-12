@@ -8,9 +8,12 @@
     [malli.error :as me]
     [my-app.tools.date :as date]
     [my-app.tools.etl-topology :as etl-topology]
+    [my-app.tools.kafka :as kafka]
     [xtdb.api :as xt])
   (:import
-    [org.apache.kafka.clients.consumer ConsumerRecord OffsetAndMetadata]))
+    [org.apache.kafka.clients.consumer ConsumerRecord]))
+
+(set! *warn-on-reflection* true)
 
 (defmethod print-method java.time.Instant
   [inst ^java.io.Writer w]
@@ -64,9 +67,9 @@
     (try
       (let [payload (.value record)]
         (log/debug "[Copy to XTDB]  Processing flight " (:flight payload))
-        (xt/await-tx db-node
-          (xt/submit-tx db-node
-            [[::xt/put (assoc payload :xt/id (random-uuid))]])))
+        (xt/submit-tx db-node
+          [[::xt/put (assoc payload :xt/id (random-uuid))]])
+        (kafka/commit-record! consumer record))
       (catch Exception e
         (log/error e "[Copy to XTDB] Failed to copy to XTDB:" (.key record))
         (throw e)))))
@@ -130,9 +133,15 @@
      '{:find [(pull ?e [*])]
        :where [[?e :xt/id]]}))
 
+  (let [cursor (xt/open-tx-log (user/db-node) 7091 true)]
+    (try
+      (take 4 (iterator-seq (:lazy-seq-iterator cursor)))
+      (finally
+        ((:close-fn cursor)))))
+
   (xt/q (user/db)
    '{:find [(pull ?e [*])]
-     :where [[?e :flight "UA068"]]})
+     :where [[?e :flight "UA043"]]})
 
   (->>
      (xt/q (user/db)
@@ -150,14 +159,12 @@
   (def topology
     (::flights-pipeline integrant.repl.state/system))
 
-  (dotimes [n 500]
-    (let [flightnr (str "UA" n)]
-     (etl-topology/send! topology :source/flight-events
-       {:flight flightnr}
-       {:flight flightnr
-        :event-type :flight-departed
-        :time #inst "2025-06-10T12:25:40.000-00:00"
-        :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"})))
+  (etl-topology/send! topology :source/flight-events
+    {:flight "UA102"}
+    {:flight "UA102"
+     :event-type :flight-departed
+     :time #inst "2025-06-10T12:25:40.000-00:00"
+     :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"})
 
   (etl-topology/send! topology :source/flight-events
     {:flight "UA102"}
@@ -179,4 +186,4 @@
        {:flight flightnr
         :event-type :flight-departed
         :time #inst "2025-06-10T12:25:40.000-00:00"
-        :scheduled-departure #inst "2025-06-10T09:25:40.000-00:00"}))))
+        :scheduled-departure #inst "2025-06-10T12:25:40.000-00:00"}))))

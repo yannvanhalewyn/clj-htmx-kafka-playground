@@ -98,26 +98,24 @@
          [topic-key
           {:topic topic
            :producer (jc/producer (producer-config topology topic-key) topic)}]))
-     :connector/handler handler}))
+     :connector/handler handler
+     :poll-duration (get-in topology [::consumer-configs connector-key :poll-duration])}))
 
 (defn add-sink [topology sink-key {:keys [in]} handler]
   (assoc-in topology [::sinks sink-key]
-    {:sink/consumer (jc/subscribed-consumer
-                      (consumer-config topology sink-key)
+    {:sink/consumer (jc/subscribed-consumer (consumer-config topology sink-key)
                       (map (::topics topology) in))
-     :sink/handler handler}))
+     :sink/handler handler
+     :poll-duration (get-in topology [::consumer-configs sink-key :poll-duration])}))
 
 (defn- start-polling! [topology component consumer handler]
-  (let [running? (atom true)
-        poll-duration 500]
+  (let [running? (atom true)]
     (future
       (try
         (while @running?
-          (let [records (.poll consumer (Duration/ofMillis poll-duration))]
+          (let [records (.poll consumer (Duration/ofMillis (or (:poll-duration component) 1000)))]
             (when (pos? (.count records))
               (log/info "Processing batch of" (.count records) "records")
-              ;; Ah the batch handler is not getting a commit
-              ;; Change batch size
               (let [result (handler (merge topology component) records)]
                 (log/info "Batch processed:" result)
                 (.commitSync consumer)))))
@@ -135,8 +133,6 @@
     (assoc component ::running? running?)))
 
 (defn start! [topology]
-  (sc.api/spy :start)
-  ;;(ja/create-topics! admin-client (vals topic))
   (-> topology
     (update ::connectors update-vals
       (fn [{:connector/keys [consumer handler] :as connector}]
@@ -146,7 +142,6 @@
         (start-polling! topology sink consumer handler)))))
 
 (defn stop! [topology]
-  (sc.api/spy :stop!)
   (doseq [source (vals (::sources topology))]
     (log/debug "Closing producer" (:source/producer source)
       (get-in source [:source/topic :topic-name]))
