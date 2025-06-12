@@ -158,6 +158,16 @@
       (consumer-config* kafka-config component)
       (map topics in))))
 
+(defn- create-missing-topics!
+  "Creates Kafka topics with specified partition-count and replication-factor"
+  [kafka-config topic-configs]
+  (with-open [admin-client (kafka/make-admin-client kafka-config)]
+    (let [existing-topics (kafka/list-topics admin-client)
+          topics-to-create (remove (comp existing-topics :topic-name) topic-configs)]
+      (when (seq topics-to-create)
+        (kafka/create-topics! admin-client topics-to-create)
+        (log/info "Created topics:" (mapv :topic-name topics-to-create))))))
+
 (defn- assoc-prepped-components
   "Prepares the components, meaning instantiating the consumers and
   producers, and assoc them onto the topology."
@@ -168,6 +178,7 @@
         (prep-component topology component)))))
 
 (defn new [{:keys [kafka-config topics] :as config}]
+  (create-missing-topics! kafka-config (vals topics))
   (-> (assoc (dissoc config :kafka-config :topics :components)
         ::kafka-config kafka-config
         ::topics (update-vals topics topic-config))

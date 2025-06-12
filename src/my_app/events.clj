@@ -104,47 +104,20 @@
   (when-not (m/validate FlightEvent payload)
     (throw (ex-info "Invalid event"
              {:errors (me/humanize (m/explain FlightEvent payload))
-              :payload payload})))
-  payload)
+              :payload payload}))) payload)
 
 (comment
   (require '[my-app.tools.jackdaw :as tools.jackdaw])
-  ;; Setup
-  (def config (my-app.config/system-config {:profile :dev}))
-  (def admin-client (ja/->AdminClient (::kafka-config config)))
 
-  (ja/list-topics admin-client)
+  ;; Manage kafka topics
+  (def config (my-app.config/system-config {:profile :dev}))
+  (def admin-client (kafka/make-admin-client (::kafka-config config)))
+
+  (kafka/list-topics admin-client)
   (tools.jackdaw/re-delete-topics (::kafka-config config)
     #"^dev-etl.*")
 
-  (count
-   (xt/q (user/db)
-     '{:find [(pull ?e [*])]
-       :where [[?e :xt/id]]}))
-
-  (let [cursor (xt/open-tx-log (user/db-node) 7091 true)]
-    (try
-      (take 4 (iterator-seq (:lazy-seq-iterator cursor)))
-      (finally
-        ((:close-fn cursor)))))
-
-  (xt/q (user/db)
-   '{:find [(pull ?e [*])]
-     :where [[?e :flight "UA314"]]})
-
-  (->>
-     (xt/q (user/db)
-      '{:find [(pull ?e [*])]
-        :where [[?e :xt/id]]})
-     (map first)
-     (map :flight)
-     (frequencies)
-     (filter
-      (fn [[_k v]]
-        (> v 1)))
-     (sort-by first))
-  (user/delete-all-entities!)
-
+  ;; Submit data to topology source
   (def topology
     (::flights-pipeline integrant.repl.state/system))
 
@@ -175,4 +148,34 @@
        {:flight flightnr
         :event-type :flight-departed
         :time #inst "2025-06-10T12:25:40.000-00:00"
-        :scheduled-departure #inst "2025-06-10T12:25:40.000-00:00"}))))
+        :scheduled-departure #inst "2025-06-10T12:25:40.000-00:00"})))
+
+  ;; Get transaction log from XTDB
+  (let [cursor (xt/open-tx-log (user/db-node) 7091 true)]
+    (try
+      (take 4 (iterator-seq (:lazy-seq-iterator cursor)))
+      (finally
+        ((:close-fn cursor)))))
+
+  (count
+   (xt/q (user/db)
+     '{:find [(pull ?e [*])]
+       :where [[?e :xt/id]]}))
+
+  (xt/q (user/db)
+   '{:find [(pull ?e [*])]
+     :where [[?e :flight "UA314"]]})
+
+  (->>
+     (xt/q (user/db)
+      '{:find [(pull ?e [*])]
+        :where [[?e :xt/id]]})
+     (map first)
+     (map :flight)
+     (frequencies)
+     (filter
+      (fn [[_k v]]
+        (> v 1)))
+     (sort-by first))
+
+  (user/delete-all-entities!))
