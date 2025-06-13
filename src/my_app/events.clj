@@ -2,7 +2,6 @@
   (:require
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
-    [jackdaw.admin :as ja]
     [jackdaw.client :as jc]
     [malli.core :as m]
     [malli.error :as me]
@@ -80,24 +79,27 @@
 
 (defmethod ig/init-key ::flights-pipeline
   [_ config]
-  (etl-topology/start!
-    (etl-topology/new config)))
+  (when (seq config)
+    (etl-topology/start!
+      (etl-topology/new config))))
 
 (defmethod ig/halt-key! ::flights-pipeline
   [_ topology]
-  (etl-topology/stop! topology))
+  (when topology
+    (etl-topology/stop! topology)))
 
 (def FlightEvent
-  [:map
-   [:flight :string]
-   [:event-type [:enum :flight-departed :flight-arrived :passenger-boarded]]
-   [:time inst?]
-   ;; For passenger events
-   [:who {:optional true} :string]
-   ;; For departure events
-   [:scheduled-departure {:optional true} inst?]
-   ;; For departure events
-   [:scheduled-arrival {:optional true} inst?]])
+  (m/schema
+    [:map
+     [:flight :string]
+     [:event-type [:enum :flight-departed :flight-arrived :passenger-boarded]]
+     [:time inst?]
+    ;; For passenger events
+     [:who {:optional true} :string]
+    ;; For departure events
+     [:scheduled-departure {:optional true} inst?]
+    ;; For departure events
+     [:scheduled-arrival {:optional true} inst?]]))
 
 (defn validate-flight-event!
   [payload]
@@ -143,12 +145,12 @@
 
   (dotimes [n 400]
     (let [flightnr (format "UA%03d" n)]
-     (jc/produce! (:producer producer) (:topic producer)
-       {:flight flightnr}
-       {:flight flightnr
-        :event-type :flight-departed
-        :time #inst "2025-06-10T12:25:40.000-00:00"
-        :scheduled-departure #inst "2025-06-10T12:25:40.000-00:00"})))
+      (jc/produce! (:producer producer) (:topic producer)
+        {:flight flightnr}
+        {:flight flightnr
+         :event-type :flight-departed
+         :time #inst "2025-06-10T12:25:40.000-00:00"
+         :scheduled-departure #inst "2025-06-10T12:25:40.000-00:00"})))
 
   ;; Get transaction log from XTDB
   (let [cursor (xt/open-tx-log (user/db-node) 7091 true)]
@@ -158,24 +160,24 @@
         ((:close-fn cursor)))))
 
   (count
-   (xt/q (user/db)
-     '{:find [(pull ?e [*])]
-       :where [[?e :xt/id]]}))
+    (xt/q (user/db)
+      '{:find [(pull ?e [*])]
+        :where [[?e :xt/id]]}))
 
   (xt/q (user/db)
-   '{:find [(pull ?e [*])]
-     :where [[?e :flight "UA314"]]})
+    '{:find [(pull ?e [*])]
+      :where [[?e :flight "UA314"]]})
 
   (->>
-     (xt/q (user/db)
+    (xt/q (user/db)
       '{:find [(pull ?e [*])]
         :where [[?e :xt/id]]})
-     (map first)
-     (map :flight)
-     (frequencies)
-     (filter
+    (map first)
+    (map :flight)
+    (frequencies)
+    (filter
       (fn [[_k v]]
         (> v 1)))
-     (sort-by first))
+    (sort-by first))
 
   (user/delete-all-entities!))

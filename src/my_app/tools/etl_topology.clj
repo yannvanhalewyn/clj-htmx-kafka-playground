@@ -88,7 +88,8 @@
     [:map
      [:kafka-config [:map-of :string :string]]
      [:topics [:map-of TopicRef TopicConfig]]
-     [:components [:vector Component]]]))
+     [:components [:vector Component]]
+     [:enabled-components {:optional true} [:vector ComponentRef]]]))
 
 (def Topology
   (m/schema
@@ -177,12 +178,15 @@
       (for [component components]
         (prep-component topology component)))))
 
-(defn new [{:keys [kafka-config topics] :as config}]
+(defn new [{:keys [kafka-config topics components enabled-components] :as config}]
   (create-missing-topics! kafka-config (vals topics))
-  (-> (assoc (dissoc config :kafka-config :topics :components)
-        ::kafka-config kafka-config
-        ::topics (update-vals topics topic-config))
-    (assoc-prepped-components (:components config))))
+  (let [enabled? (set enabled-components)
+        filtered-components (cond->> components
+                              enabled-components (filter (comp enabled? :key)))]
+    (-> (assoc (dissoc config :kafka-config :topics :components :enabled-components)
+          ::kafka-config kafka-config
+          ::topics (update-vals topics topic-config))
+      (assoc-prepped-components filtered-components))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Running the topology

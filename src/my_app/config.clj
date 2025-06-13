@@ -21,3 +21,10 @@
 (defn system-config
   [options]
   (read-config system-filename options))
+
+
+(comment
+  (def config- (read-config system-filename {:profile :production}))
+
+  (tap> config-)
+  (seq (:my-app.archive/archiving-pipeline config-)))

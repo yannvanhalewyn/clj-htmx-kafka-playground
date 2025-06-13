@@ -54,84 +54,95 @@
  {"bootstrap.servers" "localhost:29092"}
 
  :my-app.events/flights-pipeline
- {:my-app.db/db-node #ig/ref :my-app.db/db-node
-  :kafka-config #ref [:my-app.events/kafka-config]
+ #profile
+ {:production {}
+  :dev
+  {:my-app.db/db-node #ig/ref :my-app.db/db-node
+   :kafka-config #ref [:my-app.events/kafka-config]
 
-  :topics
-  {:topic/flight-events
-   {:topic-name "dev-etl-flight-events"
-    :partition-count 1
-    :replication-factor 1
-    :topic-config {"retention.ms" "31536000000"}}
-   :topic/flight-durations
-   {:topic-name "dev-etl-flight-durations"
-    :partition-count 1
-    :replication-factor 1
-    :topic-config {"retention.ms" "31536000000"}}}
+   :topics
+   {:topic/flight-events
+    {:topic-name "dev-etl-flight-events"
+     :partition-count 1
+     :replication-factor 1
+     :topic-config {"retention.ms" "31536000000"}}
+    :topic/flight-durations
+    {:topic-name "dev-etl-flight-durations"
+     :partition-count 1
+     :replication-factor 1
+     :topic-config {"retention.ms" "31536000000"}}}
 
-  :components
-  [{:type :source
-    :key :source/flight-events
-    :topic :topic/flight-events}
+   :enabled-components #{} ;; Disable this topology for now
 
-   {:type :processor
-    :key :processor/flight-durations
-    :in [:topic/flight-events]
-    :out [:topic/flight-durations]
-    :consumer-config
-    {:poll-duration 500
-     :group-id "flight-durations-calculator"}}
+   :components
+   [{:type :source
+     :key :source/flight-events
+     :topic :topic/flight-events}
 
-   {:type :sink
-    :key :sink/duration-warnings
-    :in [:topic/flight-events]
-    :consumer-config
-    {:poll-duration 500
-     :group-id "warn-delayed-flights"}}
+    {:type :processor
+     :key :processor/flight-durations
+     :in [:topic/flight-events]
+     :out [:topic/flight-durations]
+     :consumer-config
+     {:poll-duration 500
+      :group-id "flight-durations-calculator"}}
 
-   {:type :sink
-    :key :sink/copy-to-xtdb
-    :in [:topic/flight-events]
-    :consumer-config
-    {:poll-duration 500
-     :batch-size 100
-     :group-id "copy-to-xtdb"}}]}
+    {:type :sink
+     :key :sink/duration-warnings
+     :in [:topic/flight-events]
+     :consumer-config
+     {:poll-duration 500
+      :group-id "warn-delayed-flights"}}
+
+    {:type :sink
+     :key :sink/copy-to-xtdb
+     :in [:topic/flight-events]
+     :consumer-config
+     {:poll-duration 500
+      :batch-size 100
+      :group-id "copy-to-xtdb"}}]}}
 
  :my-app.archive/archiving-pipeline
- {:my-app.db/db-node #ig/ref :my-app.db/db-node
-  :kafka-config #ref [:my-app.events/kafka-config]
+ #profile
+ {:production {}
+  :dev
+  {:my-app.db/db-node #ig/ref :my-app.db/db-node
+   :kafka-config #ref [:my-app.events/kafka-config]
 
-  :topics
-  {:topic/raw-payloads
-   {:topic-name "dev-etl-raw-payloads"
-    :partition-count 10
-    :replication-factor #profile {:dev 1 :prod 3}
-    :topic-config {"retention.ms" "-1"}}
-   :topic/processed-objects
-   {:topic-name "dev-etl-processed-objects"
-    :partition-count 1
-    :replication-factor #profile {:dev 1 :prod 3}
-    :topic-config {"retention.ms" "31536000000"}}}
+   :topics
+   {:topic/raw-payloads
+    {:topic-name "dev-etl-raw-payloads"
+     :partition-count 10
+     :replication-factor #profile {:dev 1 :prod 3}
+     :topic-config {"retention.ms" "-1"}}
+    :topic/processed-objects
+    {:topic-name "dev-etl-processed-objects"
+     :partition-count 1
+     :replication-factor #profile {:dev 1 :prod 3}
+     :topic-config {"retention.ms" "31536000000"}}}
 
-  :components
-  [{:type :source
-    :key :my-app.archive/payload-ingester
-    :topic :topic/raw-payloads}
+   ;; For distributed deployment, specify only the components this node should run:
+   ;;:enabled-components #{:my-app.archive/payload-ingester}
 
-   {:type :processor
-    :key :my-app.archive/process-payloads
-    :in [:topic/raw-payloads]
-    :out [:topic/processed-objects]
-    :consumer-config
-    {:poll-duration 500
-     :group-id "extract-metadata"
-     :batch-size 100
-     "auto.offset.reset" "earliest"}}
+   :components
+   [{:type :source
+     :key :my-app.archive/payload-ingester
+     :topic :topic/raw-payloads}
 
-   {:type :sink
-    :key :my-app.archive/notify-users
-    :in [:topic/processed-objects]
-    :consumer-config
-    {:poll-duration 500
-     :batch-size 100
-     :group-id "notify-user"}}]}}
+    {:type :processor
+     :key :my-app.archive/process-payloads
+     :in [:topic/raw-payloads]
+     :out [:topic/processed-objects]
+     :consumer-config
+     {:poll-duration 500
+      :group-id "extract-metadata"
+      :batch-size 100
+      "auto.offset.reset" "earliest"}}
+
+    {:type :sink
+     :key :my-app.archive/notify-users
+     :in [:topic/processed-objects]
+     :consumer-config
+     {:poll-duration 500
+      :batch-size 100
+      :group-id "notify-user"}}]}}}
