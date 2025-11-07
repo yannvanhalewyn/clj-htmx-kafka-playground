@@ -5,7 +5,7 @@
     [clojure.spec.alpha :as s]
     [clojure.tools.namespace.repl :as repl]
     [expound.alpha :as expound]
-    [hashp.preload]
+    ;;[hashp.preload]
     [integrant.core :as ig]
     [integrant.repl :as ir]
     [integrant.repl.state :refer [system]]
@@ -70,6 +70,7 @@
 (comment
   (watch-deps/start! {:aliases [:dev :test]})
   (start-portal!)
+  (ir/go [:server/http])
   (ir/go [:my-app.db/db-node])
   (ir/go [:my-app.archive/archiving-pipeline])
   (ir/reset)

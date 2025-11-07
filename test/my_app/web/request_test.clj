@@ -7,7 +7,7 @@
 
 (deftest health-request-test []
   (testing "happy path"
-    (let [handler (:handler/ring (system-state))
+    (let [handler (:my-app.web.handler/ring-handler (system-state))
           params {}
           headers {}
           response (GET handler "/api/health" params headers)]
