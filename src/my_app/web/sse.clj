@@ -14,7 +14,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SSE Message model
 
-(def SSEMessage
+(def ^:lsp/allow-unused SSEMessage
   "(schema): A description of what and where to send the SSE message.
 
   Our internal client state keeps track of topics and optional session-ids.
@@ -102,8 +102,7 @@
     [::cleanup-handlers (session-path sse-session) cleanup-key]))
 
 (comment
- (do
-   @(::sessions (user/sse-listener))))
+  @(::sessions (user/sse-listener)))
 
 (defn- start-listener! []
   (let [events-chan (a/chan 10000)

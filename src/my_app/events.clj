@@ -101,7 +101,7 @@
     ;; For departure events
      [:scheduled-arrival {:optional true} inst?]]))
 
-(defn validate-flight-event!
+(defn ^:lsp/allow-unused validate-flight-event!
   [payload]
   (when-not (m/validate FlightEvent payload)
     (throw (ex-info "Invalid event"
