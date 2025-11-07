@@ -4,9 +4,9 @@
     [my-app.tools.date :as date]
     [my-app.tools.request :as request]
     [my-app.tools.ui :as ui]
+    [my-app.web.ui.layout :as layout]
     [simpleui.core :as su]
-    [xtdb.api :as xt]
-    [my-app.web.ui.layout :as layout]))
+    [xtdb.api :as xt]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DB

@@ -1,11 +1,12 @@
 (ns my-app.web.ui.delayed-render-sse
   (:require
-    [clojure.core.async :as a]
-    [hiccup2.core :as h]
-    [my-app.web.async-render :as async-render]
-    [my-app.web.sse :as sse]
-    [my-app.web.ui.layout :as layout]
-    [simpleui.core :as su]))
+   [clojure.core.async :as a]
+   [hiccup2.core :as h]
+   [my-app.tools.ui :as ui]
+   [my-app.web.async-render :as async-render]
+   [my-app.web.sse :as sse]
+   [my-app.web.ui.layout :as layout]
+   [simpleui.core :as su]))
 
 (def SSE_TOPIC_NAME "delayed-render-component")
 
@@ -31,6 +32,7 @@
 (su/defcomponent ^:endpoint delayed-render [req]
   (let [sse-session (sse/new-session SSE_TOPIC_NAME)]
     (layout/if-page-load req
+      (ui/link "/" "← Back")
       (sse/hx-listener sse-session
         (section "Users"
           (async-render/suspense req

@@ -1,6 +1,7 @@
 (ns my-app.web.ui.chat
   (:require
     [hiccup2.core :as h]
+    [my-app.tools.ui :as ui]
     [my-app.web.sse :as sse]
     [my-app.web.ui.layout :as layout]
     [simpleui.core :as su]))
@@ -46,6 +47,7 @@
   chat-message
   (let [sse-session {:sse/topic "chat"}]
     (layout/if-page-load req
+      (ui/link "/" "← Back")
       (sse/hx-listener sse-session)
       [:div.mt-4
        [:div#chat-messages]
