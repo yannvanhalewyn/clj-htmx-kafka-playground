@@ -35,7 +35,10 @@
            com.xtdb/xtdb-rocksdb           {:mvn/version "1.24.5"}
 
            ;; Kafka
-           fundingcircle/jackdaw {:mvn/version "0.9.12"}
+           fundingcircle/jackdaw {:mvn/version "0.9.12"
+                                   :exclusions [io.confluent/kafka-avro-serializer
+                                                io.confluent/kafka-schema-registry-client
+                                                io.confluent/kafka-json-schema-serializer]}
            ;; Missing dependency for jackdaw: https://github.com/FundingCircle/jackdaw/issues/378
            org.apache.kafka/kafka-streams-test-utils {:mvn/version "3.3.2"}
 
