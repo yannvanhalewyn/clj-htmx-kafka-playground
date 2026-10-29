@@ -21,6 +21,12 @@
 (defn full-name [person]
   (str (:person/first-name person) " " (:person/last-name person)))
 
+(defn initials [person]
+  (->> [(:person/first-name person) (:person/last-name person)]
+    (keep #(some-> % str/trim not-empty first))
+    (apply str)
+    (str/upper-case)))
+
 (defn search-key [person]
   (str/lower-case
     (str (full-name person) " "
@@ -41,22 +47,43 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; UI
 
+(def info
+  {:path "person-history"
+   :emoji "🕰️"
+   :title "Person History"
+   :blurb "Edit a person, then travel back through every version of them."
+   :intro "XTDB keeps every version of a document. Edit the person below,
+           then search through their history. All with a handful of HTMX
+           attributes and server rendered HTML."
+   :attrs ["hx-get" "hx-patch" "hx-target" "hx-include" "hx-trigger"]
+   :steps
+   [(list "Clicking " [:strong "Edit"] " sends a " (ui/code "GET form-edit")
+          " and swaps the card for a form, thanks to "
+          (ui/code "hx-target=\"this\"") " on the card. "
+          (ui/code "hx-include") " sends the hidden fields along.")
+    (list "Saving submits the form as " (ui/code "PATCH show-user")
+          ". The server writes a new version to XTDB and re-renders the whole
+          demo into " (ui/code "#app-root") ".")
+    (list "The search box sends " (ui/code "GET history-items?q=…")
+          " as you type and only swaps the list below it.")]})
+
 (su/defcomponent ^:endpoint form-edit [_req first-name last-name email*]
-  [:form.space-y-2
+  [:form.space-y-4
    {:hx-patch (str 'show-user)
     :hx-target "#app-root"}
+   [:div.grid.gap-4 {:class "sm:grid-cols-2"}
+    [:div
+     [:label.label {:for "first-name"} "First name"]
+     (ui/text "first-name" first-name)]
+    [:div
+     [:label.label {:for "last-name"} "Last name"]
+     (ui/text "last-name" last-name)]]
    [:div
-    [:label.font-semibold.mr-2 "First Name"]
-    (ui/text "first-name" first-name)]
-   [:div
-    [:label.font-semibold.mr-2 "Last Name"]
-    (ui/text "last-name" last-name)]
-   [:div
-    [:label.font-semibold.mr-2 "Email Address"]
+    [:label.label {:for "email"} "Email address"]
     (ui/email "email" email*)]
-   [:div.mt-4
-    [:button.btn.mr-2 "Save"]
-    [:button.btn {:hx-get "show-user"}
+   [:div.flex.gap-2
+    [:button.btn.btn-primary "💾 Save"]
+    [:button.btn {:type "button" :hx-get "person-history"}
      "Cancel"]]])
 
 (su/defcomponent ^:endpoint history-items [req q]
@@ -66,13 +93,15 @@
           (xt/entity-history (xt/db (:db-node req)) :person :desc
             {:with-docs? true})
           q (filter #(str/includes? (search-key (:xtdb.api/doc %)) q)))]
-    [:ul.mt-2.space-y-4
-     (for [{:keys [xtdb.api/doc xtdb.api/tx-time]} entity-history]
-       [:li
-        [:div
-         [:label.block.font-semibold (full-name doc)]
-         [:span.italic (:person/email doc)]]
-        [:p.italic "Edited at " (date/format-date tx-time)]])]))
+    (if (empty? entity-history)
+      [:p.text-lavender "No versions match " [:em q] " 🔍"]
+      [:ol.timeline
+       (for [{:keys [xtdb.api/doc xtdb.api/tx-time]} entity-history]
+         [:li
+          [:span.block.font-semibold (full-name doc)]
+          [:span.block.text-sm.text-lavender (:person/email doc)]
+          [:span.block.text-xs.text-lavender.opacity-60
+           "Edited " (date/format-date tx-time)]])])))
 
 (su/defcomponent ^:endpoint show-user [req first-name last-name email]
   ;; make sure form-edit is included in endpoints
@@ -86,37 +115,37 @@
       (upsert-person! (:db-node req) person))
 
     (layout/if-page-load req
-      (ui/link "/" "← Back")
-      [:form.space-y-2
-       {:hx-target "this"}
-       [:div.mt-4
-        (ui/hidden "first-name" first-name)
-        (ui/hidden "last-name" last-name)
-        (ui/hidden "email" email)
-        [:div
-         [:label.block.font-semibold.text-lavender (full-name person)]
-         [:span.italic email]]
-        [:button.mt-1.text-link.margin
-         {:hx-get (str 'form-edit)}
-         "Edit"]]]
+      (layout/demo
+        (assoc info :code [#'show-user #'form-edit #'history-items])
+        [:div.rounded-xl.p-4 {:hx-target "this" :class "bg-white/5"}
+         [:div.flex.items-center.gap-4
+          (ui/hidden "first-name" first-name)
+          (ui/hidden "last-name" last-name)
+          (ui/hidden "email" email)
+          [:span.avatar (initials person)]
+          [:div.min-w-0.flex-1
+           [:span.block.text-lg.font-semibold (full-name person)]
+           [:span.block.truncate.text-lavender email]]
+          [:button.btn
+           {:hx-get (str 'form-edit)
+            :hx-include "closest div"}
+           "✏️ Edit"]]]
 
-      [:hr.mt-4.border-carrara]
+        [:div.mt-8
+         [:div.flex.items-center.justify-between.gap-4
+          [:h2.heading-2 "Every version, ever"]
+          [:input.input.max-w-48
+           {:type "search"
+            :id "q"
+            :name "q"
+            :placeholder "Search…"
+            :hx-trigger "input changed delay:100ms, search"
+            :hx-get (str 'history-items)
+            :hx-target "#history-items"}]]
 
-      [:div.mt-6
-       [:div.flex.items-center.justify-between
-        [:h2.heading-2.text-md "Entity History"]
-        [:input.input.input--dark
-         {:type "text"
-          :id "q"
-          :name "q"
-          :placeholder "Search..."
-          :hx-trigger "input changed delay:100ms"
-          :hx-get (str 'history-items)
-          :hx-target "#history-items"}]]
-
-       [:div.mt-6
-        {:id "history-items"}
-        (history-items req nil)]])))
+         [:div.mt-6
+          {:id "history-items"}
+          (history-items req nil)]]))))
 
 (su/defcomponent ^:endpoint person-history [req]
   show-user

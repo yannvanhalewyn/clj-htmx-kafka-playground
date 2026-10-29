@@ -1,6 +1,7 @@
 (ns my-app.web.sse
   (:require
     [clojure.core.async :as a]
+    [clojure.string :as str]
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
     [malli.core :as m]
@@ -81,10 +82,13 @@
   [(:sse/topic sse-session) (:sse/session-id sse-session :others)])
 
 (defn- event-stream-msg
-  "A text formatted SSE message with event and data."
+  "A text formatted SSE message with event and data. Multiline data needs a
+  'data:' prefix on every line."
   [{:keys [sse/event sse/data]}]
   (str "event:" event response/EOL
-       "data:" data response/EOL
+       (apply str
+         (for [line (str/split-lines (or data ""))]
+           (str "data:" line response/EOL)))
        response/EOL))
 
 (defn register-cleanup!

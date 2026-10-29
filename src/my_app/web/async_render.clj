@@ -54,5 +54,5 @@
            (str (h/html %)))))
 
     ;; Return an HTMX component
-    [:div (assoc (select-keys params [:hx-swap])
+    [:div (assoc (select-keys params [:hx-swap :class])
             :sse-swap key)]))

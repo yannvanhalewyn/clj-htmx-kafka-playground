@@ -9,9 +9,9 @@
 
 @font-face {
     font-family: 'Gilroy';
-    src: url('/fonts/Gilroy-Semibold.ttf') format('truetype');
+    src: url('/fonts/Gilroy-SemiBold.ttf') format('truetype');
     font-weight: 600;
-    font-style: semibold;
+    font-style: normal;
 }
 
 @theme {
@@ -20,53 +20,285 @@
   --color-carrara: #F0F0F0;
   --color-martinique: #494753;
   --color-firefly: #0D0B19;
-  /* --color-fireflyy: rgb(13,11,25); */
-  /* --color-red-50: oklch(0.16030.0292289.22); */
+  --color-htmx: #3D72D7;
+  --color-candy: #FF6FAE;
+  --color-sun: #FFC857;
+  --color-mint: #5EEAD4;
+  --color-grape: #A78BFA;
 }
 
 body {
   font-family: 'Gilroy';
-  /* background-color: #121026; */
-  @apply bg-firefly text-white;
+  @apply bg-firefly text-white antialiased;
+  background-image:
+    radial-gradient(60rem 30rem at 10% -10%, rgb(61 114 215 / 0.18), transparent 60%),
+    radial-gradient(40rem 24rem at 100% 0%, rgb(255 111 174 / 0.10), transparent 60%),
+    radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px;
+  background-attachment: fixed;
 }
+
+/* Typography */
 
 .heading-1 {
   @apply text-3xl font-semibold text-lavender;
 }
 
 .heading-2 {
-  @apply text-2xl font-semibold text-lavender;
+  @apply text-xl font-semibold text-lavender;
 }
+
+.eyebrow {
+  @apply text-xs font-semibold uppercase tracking-widest text-lavender/50;
+}
+
+.prose-intro {
+  @apply text-lg leading-relaxed text-lavender/80;
+}
+
+kbd {
+  @apply rounded border border-white/20 bg-white/5 px-1 font-mono text-[0.9em];
+}
+
+code.inline {
+  @apply rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-mint;
+}
+
+/* Header */
+
+.logo {
+  @apply grid size-10 place-items-center rounded-xl bg-htmx font-mono text-sm font-bold text-white shadow-lg shadow-htmx/30 transition-transform duration-300;
+}
+
+.brand:hover .logo {
+  @apply -rotate-12 scale-110;
+}
+
+/* Form controls */
 
 .input {
-  @apply px-3 py-2 bg-gray-100 border-gray-500 rounded-md text-gray-900
+  @apply w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-lavender/40 transition outline-none focus:border-htmx focus:ring-2 focus:ring-htmx/40;
 }
 
-.input--dark {
-  @apply px-2 py-1 bg-martinique text-white outline-martinique
+.label {
+  @apply mb-1 block text-sm font-semibold text-lavender/80;
 }
 
 .text-link {
-  @apply cursor-pointer text-blue-500 underline;
+  @apply cursor-pointer text-sky-400 underline decoration-sky-400/40 underline-offset-4 hover:decoration-sky-400;
 }
 
 .btn {
-  @apply cursor-pointer px-3 py-2 bg-martinique rounded-md hover:bg-orange-500 transition-colors duration-200;
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-95;
 }
 
 .btn-primary {
-  @apply bg-orange-500;
+  @apply bg-htmx hover:bg-htmx/80;
+}
+
+/* Cards */
+
+.card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm;
+}
+
+.demo-tile {
+  --accent: var(--color-htmx);
+  @apply relative block rounded-2xl border border-white/10 bg-white/[0.03] p-5 no-underline transition duration-200;
+}
+
+.demo-tile:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 40px -12px var(--accent);
+  @apply -translate-y-1;
+}
+
+.demo-tile__emoji {
+  @apply inline-block text-3xl transition-transform duration-300;
+}
+
+.demo-tile:hover .demo-tile__emoji {
+  @apply -rotate-12 scale-125;
+}
+
+.try-it {
+  @apply relative mt-8 rounded-2xl border-2 border-dashed border-white/15 p-6;
+}
+
+.try-it__label {
+  @apply absolute -top-3 left-4 rounded-full bg-sun px-2.5 py-0.5 text-xs font-bold tracking-wide text-firefly uppercase;
+}
+
+/* Attribute chips */
+
+.chip {
+  @apply inline-flex items-center rounded-full border border-htmx/40 bg-htmx/15 px-2 py-0.5 font-mono text-xs text-sky-300;
+}
+
+a.chip {
+  @apply transition hover:border-htmx hover:bg-htmx/30;
+}
+
+/* How it works */
+
+.steps {
+  counter-reset: step;
+  @apply space-y-3;
+}
+
+.steps > li {
+  counter-increment: step;
+  @apply relative pl-10 leading-relaxed text-lavender/80;
+}
+
+.steps > li::before {
+  content: counter(step);
+  @apply absolute top-0 left-0 grid size-7 place-items-center rounded-full bg-grape/20 text-sm font-bold text-grape;
+}
+
+/* Show code foldout */
+
+.code-foldout > summary {
+  @apply inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2 text-sm font-semibold text-lavender transition select-none hover:bg-white/10;
+}
+
+.code-foldout > summary::-webkit-details-marker {
+  display: none;
+}
+
+.code-foldout > summary::before {
+  content: "▸";
+  @apply inline-block transition-transform;
+}
+
+.code-foldout[open] > summary::before {
+  @apply rotate-90;
+}
+
+.code-foldout .when-open,
+.code-foldout[open] .when-closed {
+  display: none;
+}
+
+.code-foldout[open] .when-open {
+  display: inline;
+}
+
+.code-block {
+  @apply mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/40;
+}
+
+.code-block__header {
+  @apply flex items-center justify-between border-b border-white/10 px-4 py-2 font-mono text-xs text-lavender/60;
+}
+
+.code-block pre {
+  @apply overflow-x-auto p-4 text-[13px] leading-relaxed;
+}
+
+.code-block pre code.hljs {
+  @apply bg-transparent p-0;
+}
+
+/* HTMX attributes in highlighted source get a little extra love */
+.code-block .hx-attr {
+  @apply rounded bg-htmx/25 px-0.5 font-semibold text-sky-300;
+}
+
+/* Wire log */
+
+.wire-log__entry {
+  @apply rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 font-mono text-xs;
+  animation: slide-in 0.3s ease-out;
+}
+
+.method {
+  @apply rounded px-1.5 py-0.5 font-bold;
+}
+
+.method--get { @apply bg-mint/15 text-mint; }
+.method--post { @apply bg-sun/15 text-sun; }
+.method--patch { @apply bg-grape/15 text-grape; }
+.method--put { @apply bg-grape/15 text-grape; }
+.method--delete { @apply bg-candy/15 text-candy; }
+.method--sse { @apply bg-candy/15 text-candy; }
+
+/* Demo specific bits */
+
+.avatar {
+  @apply grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-candy to-grape text-lg font-bold text-firefly;
+}
+
+.timeline {
+  @apply relative space-y-4 border-l-2 border-white/10 pl-6;
+}
+
+.timeline > li {
+  @apply relative;
+}
+
+.timeline > li::before {
+  content: "";
+  @apply absolute top-1.5 -left-[31px] size-3 rounded-full border-2 border-firefly bg-martinique;
+}
+
+.timeline > li:first-child::before {
+  @apply bg-mint;
+}
+
+.skeleton {
+  @apply h-3 rounded-full bg-white/10;
+}
+
+.countdown {
+  @apply h-1 overflow-hidden rounded-full bg-white/10;
+}
+
+.countdown > div {
+  @apply h-full rounded-full bg-sun;
+  animation: fill linear forwards;
+}
+
+.bubble {
+  @apply w-fit max-w-[85%] rounded-2xl rounded-bl-sm bg-htmx px-4 py-2 whitespace-pre-wrap;
+  animation: pop-in 0.25s ease-out;
+}
+
+#chat-messages:empty::before {
+  content: "No messages yet. Say hi 👋";
+  @apply m-auto text-lavender/40;
+}
+
+/* Briefly outline whatever HTMX just swapped, so you can see it happen */
+.hx-flash {
+  animation: flash 0.8s ease-out;
 }
 
 /* Animations */
 
 @keyframes fade-in {
-  from {
-    opacity: 0.01;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0.01; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes flash {
+  from { outline: 2px solid var(--color-sun); outline-offset: 4px; border-radius: 0.5rem; }
+  to { outline: 2px solid transparent; outline-offset: 8px; border-radius: 0.5rem; }
 }
 
 .animate-fade-in {
