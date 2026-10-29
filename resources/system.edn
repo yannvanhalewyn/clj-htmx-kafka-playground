@@ -1,5 +1,5 @@
 {:server/http
- {:port #long #or [#env PORT 3000]
+ {:port #long #or [#env PORT 3008]
   :host #or [#env HTTP_HOST "0.0.0.0"]
   :handler #ig/ref :my-app.web.handler/ring-handler}
 
